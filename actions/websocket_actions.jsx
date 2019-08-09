@@ -526,6 +526,7 @@ export function handlePostEditEvent(msg) {
         if (window.isActive) {
             dispatch(viewChannel(currentChannelId));
         }
+        dispatch(getChannelStats(currentChannelId));
     }
 }
 

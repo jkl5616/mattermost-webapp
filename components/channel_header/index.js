@@ -50,13 +50,14 @@ const mapStateToProps = (state) => {
         const dmUserId = getUserIdFromChannelName(user.id, channel.name);
         dmUser = getUser(state, dmUserId);
     }
-    const stats = getCurrentChannelStats(state) || {member_count: 0, guest_count: 0};
+    const stats = getCurrentChannelStats(state) || {member_count: 0, guest_count: 0, pinnedpost_count: 0};
 
     return {
         teamId: getCurrentTeamId(state),
         channel,
         channelMember: getMyCurrentChannelMembership(state),
         currentUser: user,
+        pinnedPostCount: stats.pinnedpost_count,
         dmUser,
         rhsState: getRhsState(state),
         isFavorite: isCurrentChannelFavorite(state),
