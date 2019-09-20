@@ -2,51 +2,53 @@
 
 exports[`components/PopoverListMembers should match snapshot 1`] = `
 <div
-  className="channel-header__icon wide "
   id="channelMember"
 >
-  <OverlayTrigger
-    defaultOverlayShown={false}
-    delayShow={400}
-    overlay={
-      <Tooltip
-        bsClass="tooltip"
-        id="channelMembersTooltip"
-        placement="right"
-      >
-        <FormattedMessage
-          defaultMessage="Members"
-          id="channel_header.channelMembers"
-          values={Object {}}
-        />
-      </Tooltip>
-    }
-    placement="bottom"
-    trigger={
-      Array [
-        "hover",
-        "focus",
-      ]
-    }
+  <button
+    aria-label="members"
+    className="style--none member-popover__trigger channel-header__icon wide "
+    id="member_popover"
+    onClick={[Function]}
   >
-    <div
-      className="member-popover__trigger"
-      id="member_popover"
-      onClick={[Function]}
+    <OverlayTrigger
+      defaultOverlayShown={false}
+      delayShow={400}
+      overlay={
+        <Tooltip
+          bsClass="tooltip"
+          id="channelMembersTooltip"
+          placement="right"
+        >
+          <FormattedMessage
+            defaultMessage="Members"
+            id="channel_header.channelMembers"
+            values={Object {}}
+          />
+        </Tooltip>
+      }
+      placement="bottom"
+      trigger={
+        Array [
+          "hover",
+          "focus",
+        ]
+      }
     >
-      <span
-        className="icon__text"
-        id="channelMemberCountText"
-      >
-        2
-      </span>
-      <MemberIcon
-        aria-hidden="true"
-        className="icon icon__members"
-        id="channelMemberIcon"
-      />
-    </div>
-  </OverlayTrigger>
+      <div>
+        <span
+          className="icon__text"
+          id="channelMemberCountText"
+        >
+          2
+        </span>
+        <MemberIcon
+          aria-hidden="true"
+          className="icon icon__members"
+          id="channelMemberIcon"
+        />
+      </div>
+    </OverlayTrigger>
+  </button>
   <Overlay
     animation={[Function]}
     onHide={[Function]}
@@ -75,6 +77,8 @@ exports[`components/PopoverListMembers should match snapshot 1`] = `
       >
         <div
           className="more-modal__list"
+          role="presentation"
+          tabIndex="-1"
         >
           <PopoverListMembersItem
             key="member_id_1"
@@ -107,51 +111,53 @@ exports[`components/PopoverListMembers should match snapshot 1`] = `
 
 exports[`components/PopoverListMembers should match snapshot with archived channel 1`] = `
 <div
-  className="channel-header__icon wide "
   id="channelMember"
 >
-  <OverlayTrigger
-    defaultOverlayShown={false}
-    delayShow={400}
-    overlay={
-      <Tooltip
-        bsClass="tooltip"
-        id="channelMembersTooltip"
-        placement="right"
-      >
-        <FormattedMessage
-          defaultMessage="Members"
-          id="channel_header.channelMembers"
-          values={Object {}}
-        />
-      </Tooltip>
-    }
-    placement="bottom"
-    trigger={
-      Array [
-        "hover",
-        "focus",
-      ]
-    }
+  <button
+    aria-label="members"
+    className="style--none member-popover__trigger channel-header__icon wide "
+    id="member_popover"
+    onClick={[Function]}
   >
-    <div
-      className="member-popover__trigger"
-      id="member_popover"
-      onClick={[Function]}
+    <OverlayTrigger
+      defaultOverlayShown={false}
+      delayShow={400}
+      overlay={
+        <Tooltip
+          bsClass="tooltip"
+          id="channelMembersTooltip"
+          placement="right"
+        >
+          <FormattedMessage
+            defaultMessage="Members"
+            id="channel_header.channelMembers"
+            values={Object {}}
+          />
+        </Tooltip>
+      }
+      placement="bottom"
+      trigger={
+        Array [
+          "hover",
+          "focus",
+        ]
+      }
     >
-      <span
-        className="icon__text"
-        id="channelMemberCountText"
-      >
-        2
-      </span>
-      <MemberIcon
-        aria-hidden="true"
-        className="icon icon__members"
-        id="channelMemberIcon"
-      />
-    </div>
-  </OverlayTrigger>
+      <div>
+        <span
+          className="icon__text"
+          id="channelMemberCountText"
+        >
+          2
+        </span>
+        <MemberIcon
+          aria-hidden="true"
+          className="icon icon__members"
+          id="channelMemberIcon"
+        />
+      </div>
+    </OverlayTrigger>
+  </button>
   <Overlay
     animation={[Function]}
     onHide={[Function]}
@@ -180,6 +186,8 @@ exports[`components/PopoverListMembers should match snapshot with archived chann
       >
         <div
           className="more-modal__list"
+          role="presentation"
+          tabIndex="-1"
         >
           <PopoverListMembersItem
             key="member_id_1"
@@ -212,51 +220,53 @@ exports[`components/PopoverListMembers should match snapshot with archived chann
 
 exports[`components/PopoverListMembers should match snapshot with group-constrained channel 1`] = `
 <div
-  className="channel-header__icon wide "
   id="channelMember"
 >
-  <OverlayTrigger
-    defaultOverlayShown={false}
-    delayShow={400}
-    overlay={
-      <Tooltip
-        bsClass="tooltip"
-        id="channelMembersTooltip"
-        placement="right"
-      >
-        <FormattedMessage
-          defaultMessage="Members"
-          id="channel_header.channelMembers"
-          values={Object {}}
-        />
-      </Tooltip>
-    }
-    placement="bottom"
-    trigger={
-      Array [
-        "hover",
-        "focus",
-      ]
-    }
+  <button
+    aria-label="members"
+    className="style--none member-popover__trigger channel-header__icon wide "
+    id="member_popover"
+    onClick={[Function]}
   >
-    <div
-      className="member-popover__trigger"
-      id="member_popover"
-      onClick={[Function]}
+    <OverlayTrigger
+      defaultOverlayShown={false}
+      delayShow={400}
+      overlay={
+        <Tooltip
+          bsClass="tooltip"
+          id="channelMembersTooltip"
+          placement="right"
+        >
+          <FormattedMessage
+            defaultMessage="Members"
+            id="channel_header.channelMembers"
+            values={Object {}}
+          />
+        </Tooltip>
+      }
+      placement="bottom"
+      trigger={
+        Array [
+          "hover",
+          "focus",
+        ]
+      }
     >
-      <span
-        className="icon__text"
-        id="channelMemberCountText"
-      >
-        2
-      </span>
-      <MemberIcon
-        aria-hidden="true"
-        className="icon icon__members"
-        id="channelMemberIcon"
-      />
-    </div>
-  </OverlayTrigger>
+      <div>
+        <span
+          className="icon__text"
+          id="channelMemberCountText"
+        >
+          2
+        </span>
+        <MemberIcon
+          aria-hidden="true"
+          className="icon icon__members"
+          id="channelMemberIcon"
+        />
+      </div>
+    </OverlayTrigger>
+  </button>
   <Overlay
     animation={[Function]}
     onHide={[Function]}
@@ -294,6 +304,8 @@ exports[`components/PopoverListMembers should match snapshot with group-constrai
       >
         <div
           className="more-modal__list"
+          role="presentation"
+          tabIndex="-1"
         >
           <PopoverListMembersItem
             key="member_id_1"
@@ -326,51 +338,53 @@ exports[`components/PopoverListMembers should match snapshot with group-constrai
 
 exports[`components/PopoverListMembers should match state when showChannelInviteModal is called 1`] = `
 <div
-  className="channel-header__icon wide "
   id="channelMember"
 >
-  <OverlayTrigger
-    defaultOverlayShown={false}
-    delayShow={400}
-    overlay={
-      <Tooltip
-        bsClass="tooltip"
-        id="channelMembersTooltip"
-        placement="right"
-      >
-        <FormattedMessage
-          defaultMessage="Members"
-          id="channel_header.channelMembers"
-          values={Object {}}
-        />
-      </Tooltip>
-    }
-    placement="bottom"
-    trigger={
-      Array [
-        "hover",
-        "focus",
-      ]
-    }
+  <button
+    aria-label="members"
+    className="style--none member-popover__trigger channel-header__icon wide "
+    id="member_popover"
+    onClick={[Function]}
   >
-    <div
-      className="member-popover__trigger"
-      id="member_popover"
-      onClick={[Function]}
+    <OverlayTrigger
+      defaultOverlayShown={false}
+      delayShow={400}
+      overlay={
+        <Tooltip
+          bsClass="tooltip"
+          id="channelMembersTooltip"
+          placement="right"
+        >
+          <FormattedMessage
+            defaultMessage="Members"
+            id="channel_header.channelMembers"
+            values={Object {}}
+          />
+        </Tooltip>
+      }
+      placement="bottom"
+      trigger={
+        Array [
+          "hover",
+          "focus",
+        ]
+      }
     >
-      <span
-        className="icon__text"
-        id="channelMemberCountText"
-      >
-        2
-      </span>
-      <MemberIcon
-        aria-hidden="true"
-        className="icon icon__members"
-        id="channelMemberIcon"
-      />
-    </div>
-  </OverlayTrigger>
+      <div>
+        <span
+          className="icon__text"
+          id="channelMemberCountText"
+        >
+          2
+        </span>
+        <MemberIcon
+          aria-hidden="true"
+          className="icon icon__members"
+          id="channelMemberIcon"
+        />
+      </div>
+    </OverlayTrigger>
+  </button>
   <Overlay
     animation={[Function]}
     onHide={[Function]}
@@ -399,6 +413,8 @@ exports[`components/PopoverListMembers should match state when showChannelInvite
       >
         <div
           className="more-modal__list"
+          role="presentation"
+          tabIndex="-1"
         >
           <PopoverListMembersItem
             key="member_id_1"

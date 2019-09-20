@@ -8,9 +8,9 @@ import {FormattedMessage} from 'react-intl';
 import {memoizeResult} from 'mattermost-redux/utils/helpers';
 
 import Markdown from 'components/markdown';
-import GlobeIcon from 'components/svg/globe_icon';
-import LockIcon from 'components/svg/lock_icon';
-import ArchiveIcon from 'components/svg/archive_icon';
+import GlobeIcon from 'components/widgets/icons/globe_icon';
+import LockIcon from 'components/widgets/icons/lock_icon';
+import ArchiveIcon from 'components/widgets/icons/archive_icon';
 
 import Constants from 'utils/constants.jsx';
 import {getSiteURL} from 'utils/url.jsx';
@@ -135,7 +135,7 @@ export default class ChannelInfoModal extends React.PureComponent {
 
         return (
             <Modal
-                dialogClassName='about-modal'
+                dialogClassName='a11y__modal about-modal'
                 show={this.state.show}
                 onHide={this.onHide}
                 onExited={this.props.onHide}

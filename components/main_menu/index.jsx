@@ -26,11 +26,13 @@ function mapStateToProps(state) {
     const appDownloadLink = config.AppDownloadLink;
     const enableCommands = config.EnableCommands === 'true';
     const enableCustomEmoji = config.EnableCustomEmoji === 'true';
+    const siteName = config.SiteName;
     const enableIncomingWebhooks = config.EnableIncomingWebhooks === 'true';
     const enableOAuthServiceProvider = config.EnableOAuthServiceProvider === 'true';
     const enableOutgoingWebhooks = config.EnableOutgoingWebhooks === 'true';
     const enableUserCreation = config.EnableUserCreation === 'true';
     const enableEmailInvitations = config.EnableEmailInvitations === 'true';
+    const enablePluginMarketplace = config.PluginsEnabled === 'true' && config.EnableMarketplace === 'true';
     const experimentalPrimaryTeam = config.ExperimentalPrimaryTeam;
     const helpLink = config.HelpLink;
     const reportAProblemLink = config.ReportAProblemLink;
@@ -59,12 +61,14 @@ function mapStateToProps(state) {
         enableOutgoingWebhooks,
         enableUserCreation,
         enableEmailInvitations,
+        enablePluginMarketplace,
         experimentalPrimaryTeam,
         helpLink,
         reportAProblemLink,
         pluginMenuItems: state.plugins.components.MainMenu,
         canCreateOrDeleteCustomEmoji,
         moreTeamsToJoin,
+        siteName,
         teamId: currentTeam.id,
         teamName: currentTeam.name,
         teamType: currentTeam.type,

@@ -44,12 +44,10 @@ export default class DeleteChannelModal extends React.PureComponent {
     constructor(props) {
         super(props);
 
-        this.handleDelete = this.handleDelete.bind(this);
-        this.onHide = this.onHide.bind(this);
         this.state = {show: true};
     }
 
-    handleDelete() {
+    handleDelete = () => {
         if (this.props.channel.id.length !== Constants.CHANNEL_ID_LENGTH) {
             return;
         }
@@ -61,7 +59,7 @@ export default class DeleteChannelModal extends React.PureComponent {
         this.onHide();
     }
 
-    onHide() {
+    onHide = () => {
         this.setState({show: false});
     }
 
@@ -69,6 +67,7 @@ export default class DeleteChannelModal extends React.PureComponent {
         const {canViewArchivedChannels} = this.props;
         return (
             <Modal
+                dialogClassName='a11y__modal'
                 show={this.state.show}
                 onHide={this.onHide}
                 onExited={this.props.onHide}

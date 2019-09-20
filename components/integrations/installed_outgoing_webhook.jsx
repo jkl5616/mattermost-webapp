@@ -90,20 +90,13 @@ export default class InstalledOutgoingWebhook extends React.PureComponent {
         channel: PropTypes.object,
     }
 
-    constructor(props) {
-        super(props);
-
-        this.handleRegenToken = this.handleRegenToken.bind(this);
-        this.handleDelete = this.handleDelete.bind(this);
-    }
-
-    handleRegenToken(e) {
+    handleRegenToken = (e) => {
         e.preventDefault();
 
         this.props.onRegenToken(this.props.outgoingWebhook);
     }
 
-    handleDelete() {
+    handleDelete = () => {
         this.props.onDelete(this.props.outgoingWebhook);
     }
 
@@ -226,9 +219,9 @@ export default class InstalledOutgoingWebhook extends React.PureComponent {
             <div className='backstage-list__item'>
                 <div className='item-details'>
                     <div className='item-details__row'>
-                        <span className='item-details__name'>
+                        <strong className='item-details__name'>
                             {displayName}
-                        </span>
+                        </strong>
                     </div>
                     {description}
                     <div className='item-details__row'>

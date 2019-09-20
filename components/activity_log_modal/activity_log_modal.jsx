@@ -112,7 +112,7 @@ export default class ActivityLogModal extends React.PureComponent {
 
         return (
             <Modal
-                dialogClassName='modal--scroll'
+                dialogClassName='a11y__modal modal--scroll'
                 show={this.state.show}
                 onHide={this.onHide}
                 onExited={this.props.onHide}
@@ -140,6 +140,18 @@ export default class ActivityLogModal extends React.PureComponent {
                     </p>
                     {content}
                 </Modal.Body>
+                <Modal.Footer className='modal-footer--invisible'>
+                    <button
+                        id='closeModalButton'
+                        type='button'
+                        className='btn btn-link'
+                    >
+                        <FormattedMessage
+                            id='general_button.close'
+                            defaultMessage='Close'
+                        />
+                    </button>
+                </Modal.Footer>
             </Modal>
         );
     }

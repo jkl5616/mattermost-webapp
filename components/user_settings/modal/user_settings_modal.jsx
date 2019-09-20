@@ -76,7 +76,6 @@ class UserSettingsModal extends React.Component {
         this.state = {
             active_tab: 'general',
             active_section: '',
-            prev_active_section: 'dummySectionName', // dummy value that should never match any section name
             showConfirmModal: false,
             enforceFocus: true,
             show: true,
@@ -145,7 +144,6 @@ class UserSettingsModal extends React.Component {
         this.setState({
             active_tab: 'general',
             active_section: '',
-            prev_active_section: 'dummySectionName',
         });
         this.props.onHide();
     }
@@ -157,7 +155,6 @@ class UserSettingsModal extends React.Component {
         this.setState({
             active_tab: '',
             active_section: '',
-            prev_active_section: '',
         });
     }
 
@@ -226,7 +223,6 @@ class UserSettingsModal extends React.Component {
             this.setState({
                 active_tab: tab,
                 active_section: '',
-                prev_active_section: 'dummySectionName',
             });
         }
     }
@@ -236,7 +232,6 @@ class UserSettingsModal extends React.Component {
             this.showConfirmModal(() => this.updateSection(section, true));
         } else {
             this.setState({
-                prev_active_section: section ? '' : this.state.active_section,
                 active_section: section,
             });
         }
@@ -259,7 +254,7 @@ class UserSettingsModal extends React.Component {
         return (
             <Modal
                 id='accountSettingsModal'
-                dialogClassName='settings-modal'
+                dialogClassName='a11y__modal settings-modal'
                 show={this.state.show}
                 onHide={this.handleHide}
                 onExited={this.handleHidden}
@@ -296,7 +291,6 @@ class UserSettingsModal extends React.Component {
                                 doLoad={loadUserSettings}
                                 activeTab={this.state.active_tab}
                                 activeSection={this.state.active_section}
-                                prevActiveSection={this.state.prev_active_section}
                                 updateSection={this.updateSection}
                                 updateTab={this.updateTab}
                                 closeModal={this.closeModal}

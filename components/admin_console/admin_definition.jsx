@@ -12,7 +12,7 @@ import {
     removeIdpSamlCertificate, uploadIdpSamlCertificate,
     removePrivateSamlCertificate, uploadPrivateSamlCertificate,
     removePublicSamlCertificate, uploadPublicSamlCertificate,
-    invalidateAllEmailInvites,
+    invalidateAllEmailInvites, testSmtp,
 } from 'actions/admin_actions';
 import SystemAnalytics from 'components/analytics/system_analytics';
 import TeamAnalytics from 'components/analytics/team_analytics';
@@ -28,11 +28,15 @@ import PermissionSchemesSettings from './permission_schemes_settings';
 import PermissionSystemSchemeSettings from './permission_schemes_settings/permission_system_scheme_settings';
 import PermissionTeamSchemeSettings from './permission_schemes_settings/permission_team_scheme_settings';
 import SystemUsers from './system_users';
+import SystemUserDetail from './system_user_detail';
 import ServerLogs from './server_logs';
 import BrandImageSetting from './brand_image_setting/brand_image_setting.jsx';
 import GroupSettings from './group_settings/group_settings.jsx';
 import GroupDetails from './group_settings/group_details';
-
+import TeamSettings from './team_channel_settings/team';
+import TeamDetails from './team_channel_settings/team/details';
+import ChannelSettings from './team_channel_settings/channel';
+import ChannelDetails from './team_channel_settings/channel/details';
 import PasswordSettings from './password_settings.jsx';
 import PushNotificationsSettings from './push_settings.jsx';
 import DataRetentionSettings from './data_retention_settings.jsx';
@@ -152,9 +156,9 @@ export const it = {
     licensedForFeature: (feature) => (config, state, license) => license.IsLicensed && license[feature] === 'true',
 };
 
-export default {
+const AdminDefinition = {
     about: {
-        icon: 'fa-info',
+        icon: 'fa-info-circle',
         sectionTitle: t('admin.sidebar.about'),
         sectionTitleDefault: 'About',
         license: {
@@ -251,6 +255,13 @@ export default {
         icon: 'fa-users',
         sectionTitle: t('admin.sidebar.userManagement'),
         sectionTitleDefault: 'User Management',
+        system_user_detail: {
+            url: 'user_management/user/:user_id',
+            schema: {
+                id: 'SystemUserDetail',
+                component: SystemUserDetail,
+            },
+        },
         system_users: {
             url: 'user_management/users',
             title: t('admin.sidebar.users'),
@@ -285,6 +296,54 @@ export default {
             schema: {
                 id: 'Groups',
                 component: GroupSettings,
+            },
+        },
+        team_detail: {
+            url: 'user_management/teams/:team_id',
+            isHidden: it.either(
+                it.isnt(it.licensedForFeature('LDAPGroups')),
+                it.configIsFalse('ServiceSettings', 'ExperimentalLdapGroupSync'),
+            ),
+            schema: {
+                id: 'TeamDetail',
+                component: TeamDetails,
+            },
+        },
+        teams: {
+            url: 'user_management/teams',
+            title: t('admin.sidebar.teams'),
+            title_default: 'Teams',
+            isHidden: it.either(
+                it.isnt(it.licensedForFeature('LDAPGroups')),
+                it.configIsFalse('ServiceSettings', 'ExperimentalLdapGroupSync'),
+            ),
+            schema: {
+                id: 'Teams',
+                component: TeamSettings,
+            },
+        },
+        channel_detail: {
+            url: 'user_management/channels/:channel_id',
+            isHidden: it.either(
+                it.isnt(it.licensedForFeature('LDAPGroups')),
+                it.configIsFalse('ServiceSettings', 'ExperimentalLdapGroupSync'),
+            ),
+            schema: {
+                id: 'ChannelDetail',
+                component: ChannelDetails,
+            },
+        },
+        channel: {
+            url: 'user_management/channels',
+            title: t('admin.sidebar.channels'),
+            title_default: 'Channels',
+            isHidden: it.either(
+                it.isnt(it.licensedForFeature('LDAPGroups')),
+                it.configIsFalse('ServiceSettings', 'ExperimentalLdapGroupSync'),
+            ),
+            schema: {
+                id: 'Channels',
+                component: ChannelSettings,
             },
         },
         systemScheme: {
@@ -592,6 +651,8 @@ export default {
                 'admin.elasticsearch.connectionUrlTitle',
                 ['admin.elasticsearch.connectionUrlDescription', {documentationLink: ''}],
                 'admin.elasticsearch.connectionUrlExample.documentationLinkText',
+                'admin.elasticsearch.skipTLSVerificationTitle',
+                'admin.elasticsearch.skipTLSVerificationDescription',
                 'admin.elasticsearch.usernameTitle',
                 'admin.elasticsearch.usernameDescription',
                 'admin.elasticsearch.passwordTitle',
@@ -740,7 +801,7 @@ export default {
                         help_text: t('admin.image.amazonS3SSEDescription'),
                         help_text_markdown: true,
                         help_text_default: 'When true, encrypt files in Amazon S3 using server-side encryption with Amazon S3-managed keys. See [documentation](!https://about.mattermost.com/default-server-side-encryption) to learn more.',
-                        isHidden: it.isnt(it.licensed),
+                        isHidden: it.isnt(it.licensedForFeature('Compliance')),
                         isDisabled: it.isnt(it.stateEquals('FileSettings.DriverName', FILE_STORAGE_DRIVER_S3)),
                     },
                     {
@@ -901,7 +962,6 @@ export default {
                         label: t('admin.environment.smtp.connectionSecurity.title'),
                         label_default: 'Connection Security:',
                         help_text: DefinitionConstants.CONNECTION_SECURITY_HELP_TEXT_EMAIL,
-                        isHidden: it.isnt(it.licensedForFeature('EmailNotificationContents')),
                         options: [
                             {
                                 value: '',
@@ -919,6 +979,19 @@ export default {
                                 display_name_default: 'STARTTLS',
                             },
                         ],
+                    },
+                    {
+                        type: Constants.SettingsTypes.TYPE_BUTTON,
+                        action: testSmtp,
+                        key: 'TestSmtpConnection',
+                        label: t('admin.environment.smtp.connectionSmtpTest'),
+                        label_default: 'Test Connection',
+                        loading: t('admin.environment.smtp.testing'),
+                        loading_default: 'Testing...',
+                        error_message: t('admin.environment.smtp.smtpFail'),
+                        error_message_default: 'Connection unsuccessful: {error}',
+                        success_message: t('admin.environment.smtp.smtpSuccess'),
+                        success_message_default: 'No errors were reported while sending an email. Please check your inbox to make sure.',
                     },
                     {
                         type: Constants.SettingsTypes.TYPE_BOOL,
@@ -1637,7 +1710,6 @@ export default {
             url: 'environment/notifications',
             title: t('admin.sidebar.notifications'),
             title_default: 'Notifications',
-            isHidden: it.configIsTrue('ExperimentalSettings', 'RestrictSystemAdmin'),
             schema: {
                 id: 'notifications',
                 name: t('admin.environment.notifications'),
@@ -1657,7 +1729,7 @@ export default {
                         label: t('admin.environment.notifications.enable.label'),
                         label_default: 'Enable Email Notifications:',
                         help_text: t('admin.environment.notifications.enable.help'),
-                        help_text_default: 'Typically set to true in production. When true, Mattermost attempts to send email notifications. Developers may set this field to false to skip email setup for faster development.',
+                        help_text_default: 'Typically set to true in production. When true, Mattermost attempts to send email notifications. When false, email invitations and user account setting change emails are still sent as long as the SMTP server is configured. Developers may set this field to false to skip email setup for faster development.',
                     },
                     {
                         type: Constants.SettingsTypes.TYPE_BOOL,
@@ -1726,6 +1798,7 @@ export default {
                         help_text: t('admin.environment.notifications.feedbackEmail.help'),
                         help_text_default: 'Email address displayed on email account used when sending notification emails from Mattermost.',
                         isDisabled: it.stateIsFalse('EmailSettings.SendEmailNotifications'),
+                        isHidden: it.configIsTrue('ExperimentalSettings', 'RestrictSystemAdmin'),
                     },
                     {
                         type: Constants.SettingsTypes.TYPE_TEXT,
@@ -1757,7 +1830,6 @@ export default {
                         help_text: t('admin.environment.notifications.pushContents.help'),
                         help_text_default: '**Send generic description with only sender name** - Includes only the name of the person who sent the message in push notifications, with no information about channel name or message contents.\n **Send generic description with sender and channel names** - Includes the name of the person who sent the message and the channel it was sent in, but not the message text.\n **Send full message snippet** - Includes a message excerpt in push notifications, which may contain confidential information sent in messages. If your Push Notification Service is outside your firewall, it is *highly recommended* this option only be used with an "https" protocol to encrypt the connection.',
                         help_text_markdown: true,
-                        isHidden: it.isnt(it.licensedForFeature('EmailNotificationContents')),
                         options: [
                             {
                                 value: 'generic_no_channel',
@@ -1875,7 +1947,15 @@ export default {
                         label: t('admin.customization.enableLinkPreviewsTitle'),
                         label_default: 'Enable Link Previews:',
                         help_text: t('admin.customization.enableLinkPreviewsDesc'),
-                        help_text_default: 'Display a preview of website content below messages, when available. Users can disable these previews from Account Settings > Display > Website Link Previews. This setting only applies to websites with OpenGraph metadata and not for image links or YouTube previews.',
+                        help_text_default: 'Display a preview of website content, image links and YouTube links below the message when available. The server must be connected to the internet and have access through the firewall (if applicable) to the websites from which previews are expected. Users can disable these previews from Account Settings > Display > Website Link Previews.',
+                    },
+                    {
+                        type: Constants.SettingsTypes.TYPE_BOOL,
+                        key: 'ServiceSettings.EnableSVGs',
+                        label: t('admin.customization.enableSVGsTitle'),
+                        label_default: 'Enable SVGs:',
+                        help_text: t('admin.customization.enableSVGsDesc'),
+                        help_text_default: 'Enable previews for SVG file attachments and allow them to appear in messages.',
                     },
                     {
                         type: Constants.SettingsTypes.TYPE_CUSTOM,
@@ -1921,7 +2001,7 @@ export default {
                         label_default: 'Allow File Uploads on Mobile:',
                         help_text: t('admin.file.enableMobileUploadDesc'),
                         help_text_default: 'When false, disables file uploads on mobile apps. If Allow File Sharing is set to true, users can still upload files from a mobile web browser.',
-                        isHidden: it.isnt(it.licensed),
+                        isHidden: it.isnt(it.licensedForFeature('Compliance')),
                     },
                     {
                         type: Constants.SettingsTypes.TYPE_BOOL,
@@ -1930,7 +2010,7 @@ export default {
                         label_default: 'Allow File Downloads on Mobile:',
                         help_text: t('admin.file.enableMobileDownloadDesc'),
                         help_text_default: 'When false, disables file downloads on mobile apps. Users can still download files from a mobile web browser.',
-                        isHidden: it.isnt(it.licensed),
+                        isHidden: it.isnt(it.licensedForFeature('Compliance')),
                     },
                 ],
             },
@@ -1991,9 +2071,21 @@ export default {
                         label: t('admin.team.restrictTitle'),
                         label_default: 'Restrict account creation to specified email domains:',
                         help_text: t('admin.team.restrictDescription'),
-                        help_text_default: 'User accounts can only be created from a specific domain (e.g. "mattermost.org") or list of comma-separated domains (e.g. "corp.mattermost.com, mattermost.org"). This setting only affects email login.',
+                        help_text_default: 'User accounts can only be created from a specific domain (e.g. "mattermost.org") or list of comma-separated domains (e.g. "corp.mattermost.com, mattermost.org"). This setting only affects email login for users.',
                         placeholder: t('admin.team.restrictExample'),
                         placeholder_default: 'E.g.: "corp.mattermost.com, mattermost.org"',
+                        isHidden: it.licensed,
+                    },
+                    {
+                        type: Constants.SettingsTypes.TYPE_TEXT,
+                        key: 'TeamSettings.RestrictCreationToDomains',
+                        label: t('admin.team.restrictTitle'),
+                        label_default: 'Restrict account creation to specified email domains:',
+                        help_text: t('admin.team.restrictGuestDescription'),
+                        help_text_default: 'User accounts can only be created from a specific domain (e.g. "mattermost.org") or list of comma-separated domains (e.g. "corp.mattermost.com, mattermost.org"). This setting only affects email login for users. For Guest users, please add domains under Signup > Guest Access.',
+                        placeholder: t('admin.team.restrictExample'),
+                        placeholder_default: 'E.g.: "corp.mattermost.com, mattermost.org"',
+                        isHidden: it.isnt(it.licensed),
                     },
                     {
                         type: Constants.SettingsTypes.TYPE_BOOL,
@@ -2224,7 +2316,7 @@ export default {
                         label: t('admin.ldap.skipCertificateVerification'),
                         label_default: 'Skip Certificate Verification:',
                         help_text: t('admin.ldap.skipCertificateVerificationDesc'),
-                        help_text_default: 'Skips the certificate verification step for TLS or STARTTLS connections. Not recommended for production environments where TLS is required. For testing only.',
+                        help_text_default: 'Skips the certificate verification step for TLS or STARTTLS connections. Skipping certificate verification is not recommended for production environments where TLS is required.',
                         isDisabled: it.stateIsFalse('LdapSettings.ConnectionSecurity'),
                     },
                     {
@@ -2286,7 +2378,8 @@ export default {
                         label_default: 'Group Filter:',
                         help_text: t('admin.ldap.groupFilterFilterDesc'),
                         help_text_markdown: true,
-                        help_text_default: '(Optional) Enter an AD/LDAP filter to use when searching for group objects. Only the groups selected by the query will be available to Mattermost. From [User Management > Groups](/admin_console/user_management/groups), select which AD/LDAP groups should be linked and configured.',
+                        help_text_default: '(Optional) Enter an AD/LDAP filter to use when searching for group objects. Only the groups selected by the query will be available to Mattermost. From [User Management > Groups]({siteURL}/admin_console/user_management/groups), select which AD/LDAP groups should be linked and configured.',
+                        help_text_values: {siteURL: getSiteURL()},
                         placeholder: t('admin.ldap.groupFilterEx'),
                         placeholder_default: 'E.g.: "(objectClass=group)"',
                         isDisabled: it.stateIsFalse('LdapSettings.EnableSync'),
@@ -2310,9 +2403,10 @@ export default {
                         label: t('admin.ldap.groupIdAttributeTitle'),
                         label_default: 'Group ID Attribute:',
                         help_text: t('admin.ldap.groupIdAttributeDesc'),
-                        help_text_default: 'The attribute in the AD/LDAP server used as unique identifier for Groups. This should be a AD/LDAP attribute with a value that does not change.',
+                        help_text_default: 'The attribute in the AD/LDAP server used as a unique identifier for Groups. This should be a AD/LDAP attribute with a value that does not change such as `entryUUID` for LDAP or `objectGUID` for Active Directory.',
+                        help_text_markdown: true,
                         placeholder: t('admin.ldap.groupIdAttributeEx'),
-                        placeholder_default: 'E.g.: "entryUUID"',
+                        placeholder_default: 'E.g.: "objectGUID" or "entryUUID"',
                         isDisabled: it.stateIsFalse('LdapSettings.EnableSync'),
                         isHidden: (config) => it.isnt(it.licensedForFeature('LDAPGroups')) && !config.ServiceSettings.ExperimentalLdapGroupSync,
                     },
@@ -2406,10 +2500,10 @@ export default {
                         label: t('admin.ldap.idAttrTitle'),
                         label_default: 'ID Attribute: ',
                         placeholder: t('admin.ldap.idAttrEx'),
-                        placeholder_default: 'E.g.: "objectGUID"',
+                        placeholder_default: 'E.g.: "objectGUID" or "entryUUID"',
                         help_text: t('admin.ldap.idAttrDesc'),
                         help_text_markdown: true,
-                        help_text_default: 'The attribute in the AD/LDAP server used as a unique identifier in Mattermost. It should be an AD/LDAP attribute with a value that does not change. If a user\'s ID Attribute changes, it will create a new Mattermost account unassociated with their old one.\n \nIf you need to change this field after users have already logged in, use the [mattermost ldap idmigrate](!https://about.mattermost.com/default-mattermost-ldap-idmigrate) CLI tool.',
+                        help_text_default: 'The attribute in the AD/LDAP server used as a unique identifier in Mattermost. It should be an AD/LDAP attribute with a value that does not change such as `entryUUID` for LDAP or `objectGUID` for Active Directory. If a user\'s ID Attribute changes, it will create a new Mattermost account unassociated with their old one.\n \nIf you need to change this field after users have already logged in, use the [mattermost ldap idmigrate](!https://about.mattermost.com/default-mattermost-ldap-idmigrate) CLI tool.',
                         isDisabled: it.both(
                             it.stateEquals('LdapSettings.Enable', false),
                             it.stateEquals('LdapSettings.EnableSync', false),
@@ -2722,7 +2816,7 @@ export default {
                         label: t('admin.saml.verifyTitle'),
                         label_default: 'Verify Signature:',
                         help_text: t('admin.saml.verifyDescription'),
-                        help_text_default: 'When false, Mattermost will not verify that the signature sent from a SAML Response matches the Service Provider Login URL. Not recommended for production environments. For testing only.',
+                        help_text_default: 'When false, Mattermost will not verify that the signature sent from a SAML Response matches the Service Provider Login URL. Disabling verification is not recommended for production environments.',
                         isDisabled: it.stateIsFalse('SamlSettings.Enable'),
                     },
                     {
@@ -2753,7 +2847,7 @@ export default {
                         label: t('admin.saml.encryptTitle'),
                         label_default: 'Enable Encryption:',
                         help_text: t('admin.saml.encryptDescription'),
-                        help_text_default: 'When false, Mattermost will not decrypt SAML Assertions encrypted with your Service Provider Public Certificate. Not recommended for production environments. For testing only.',
+                        help_text_default: 'When false, Mattermost will not decrypt SAML Assertions encrypted with your Service Provider Public Certificate. Disabling encryption is not recommended for production environments.',
                         isDisabled: it.stateIsFalse('SamlSettings.Enable'),
                     },
                     {
@@ -2801,6 +2895,19 @@ export default {
                         fileType: '.crt,.cer',
                         upload_action: uploadPublicSamlCertificate,
                         remove_action: removePublicSamlCertificate,
+                    },
+                    {
+                        type: Constants.SettingsTypes.TYPE_BOOL,
+                        key: 'SamlSettings.SignRequest',
+                        label: t('admin.saml.signRequestTitle'),
+                        label_default: 'Sign Request:',
+                        help_text: t('admin.saml.signRequestDescription'),
+                        help_text_default: 'When true, Mattermost will sign the SAML request using your private key. When false, Mattermost will not sign the SAML request.',
+                        isDisabled: it.either(
+                            it.stateIsFalse('SamlSettings.Encrypt'),
+                            it.stateIsFalse('SamlSettings.PrivateKeyFile'),
+                            it.stateIsFalse('SamlSettings.PublicCertificateFile')
+                        ),
                     },
                     {
                         type: Constants.SettingsTypes.TYPE_TEXT,
@@ -3088,7 +3195,7 @@ export default {
                             {
                                 value: Constants.OFFICE365_SERVICE,
                                 display_name: t('admin.oauth.office365'),
-                                display_name_default: 'Office 365 (Beta)',
+                                display_name_default: 'Office 365',
                                 isHidden: it.isnt(it.licensedForFeature('Office365OAuth')),
                                 help_text: t('admin.office365.EnableMarkdownDesc'),
                                 help_text_default: '1. [Log in](!https://login.microsoftonline.com/) to your Microsoft or Office 365 account. Make sure it`s the account on the same [tenant](!https://msdn.microsoft.com/en-us/library/azure/jj573650.aspx#Anchor_0) that you would like users to log in with.\n2. Go to [https://apps.dev.microsoft.com](!https://apps.dev.microsoft.com), click **Go to app list** > **Add an app** and use "Mattermost - your-company-name" as the **Application Name**.\n3. Under **Application Secrets**, click **Generate New Password** and paste it to the **Application Secret Password** field below.\n4. Under **Platforms**, click **Add Platform**, choose **Web** and enter **your-mattermost-url/signup/office365/complete** (example: http://localhost:8065/signup/office365/complete) under **Redirect URIs**. Also uncheck **Allow Implicit Flow**.\n5. Finally, click **Save** and then paste the **Application ID** below.',
@@ -3198,7 +3305,7 @@ export default {
                         key: 'GoogleSettings.UserApiEndpoint',
                         label: t('admin.google.userTitle'),
                         label_default: 'User API Endpoint:',
-                        dynamic_value: () => 'https://www.googleapis.com/plus/v1/people/me',
+                        dynamic_value: () => 'https://people.googleapis.com/v1/people/me?personFields=names,emailAddresses,nicknames,metadata',
                         isDisabled: true,
                         isHidden: it.isnt(it.stateEquals('oauthType', 'google')),
                     },
@@ -3272,20 +3379,127 @@ export default {
                 ],
             },
         },
+        guest_access: {
+            url: 'authentication/guest_access',
+            title: t('admin.sidebar.guest_access'),
+            title_default: 'Guest Access (Beta)',
+            isHidden: it.isnt(it.licensed),
+            schema: {
+                id: 'GuestAccountsSettings',
+                name: t('admin.authentication.guest_access'),
+                name_default: 'Guest Access (Beta)',
+                settings: [
+                    {
+                        type: Constants.SettingsTypes.TYPE_BOOL,
+                        key: 'GuestAccountsSettings.Enable',
+                        label: t('admin.guest_access.enableTitle'),
+                        label_default: 'Enable Guest Access: ',
+                        help_text: t('admin.guest_access.enableDescription'),
+                        help_text_default: 'When true, external guest can be invited to channels within teams. Please see [Permissions Schemes](../user_management/permissions/system_scheme) for which roles can invite guests.',
+                        help_text_markdown: true,
+                    },
+                    {
+                        type: Constants.SettingsTypes.TYPE_TEXT,
+                        key: 'GuestAccountsSettings.RestrictCreationToDomains',
+                        label: t('admin.guest_access.whitelistedDomainsTitle'),
+                        label_default: 'Whitelisted Guest Domains:',
+                        help_text: t('admin.guest_access.whitelistedDomainsDescription'),
+                        help_text_default: '(Optional) Guest accounts can be created at the system level from this list of allowed guest domains.',
+                        help_text_markdown: true,
+                        placeholder: t('admin.guest_access.whitelistedDomainsExample'),
+                        placeholder_default: 'E.g.: "company.com, othercorp.org"',
+                    },
+                    {
+                        type: Constants.SettingsTypes.TYPE_BOOL,
+                        key: 'GuestAccountsSettings.EnforceMultifactorAuthentication',
+                        label: t('admin.guest_access.mfaTitle'),
+                        label_default: 'Enforce Multi-factor Authentication: ',
+                        help_text: t('admin.guest_access.mfaDescription'),
+                        help_text_default: 'When true, [multi-factor authentication](!https://docs.mattermost.com/deployment/auth.html) for guests is required for login. New guest users will be required to configure MFA on signup. Logged in guest users without MFA configured are redirected to the MFA setup page until configuration is complete.\n \nIf your system has guest users with login methods other than AD/LDAP and email, MFA must be enforced with the authentication provider outside of Mattermost.',
+                        help_text_markdown: true,
+                        isHidden: it.either(
+                            it.configIsFalse('ServiceSettings', 'EnableMultifactorAuthentication'),
+                            it.configIsFalse('ServiceSettings', 'EnforceMultifactorAuthentication'),
+                        ),
+                    },
+                    {
+                        type: Constants.SettingsTypes.TYPE_BOOL,
+                        key: 'GuestAccountsSettings.EnforceMultifactorAuthentication',
+                        label: t('admin.guest_access.mfaTitle'),
+                        label_default: 'Enforce Multi-factor Authentication: ',
+                        help_text: t('admin.guest_access.mfaDescriptionMFANotEnabled'),
+                        help_text_default: '[Multi-factor authentication](./mfa) is currently not enabled.',
+                        help_text_markdown: true,
+                        isDisabled: () => true,
+                        isHidden: it.configIsTrue('ServiceSettings', 'EnableMultifactorAuthentication'),
+                    },
+                    {
+                        type: Constants.SettingsTypes.TYPE_BOOL,
+                        key: 'GuestAccountsSettings.EnforceMultifactorAuthentication',
+                        label: t('admin.guest_access.mfaTitle'),
+                        label_default: 'Enforce Multi-factor Authentication: ',
+                        help_text: t('admin.guest_access.mfaDescriptionMFANotEnforced'),
+                        help_text_default: '[Multi-factor authentication](./mfa) is currently not enforced.',
+                        help_text_markdown: true,
+                        isDisabled: () => true,
+                        isHidden: it.either(
+                            it.configIsFalse('ServiceSettings', 'EnableMultifactorAuthentication'),
+                            it.configIsTrue('ServiceSettings', 'EnforceMultifactorAuthentication'),
+                        ),
+                    },
+                ],
+            },
+        },
+    },
+    plugins: {
+        icon: 'fa-plug',
+        sectionTitle: t('admin.sidebar.plugins'),
+        sectionTitleDefault: 'Plugins (Beta)',
+        id: 'plugins',
+        plugin_management: {
+            url: 'plugins/plugin_management',
+            title: t('admin.plugins.pluginManagement'),
+            title_default: 'Plugin Management',
+            searchableStrings: [
+                'admin.plugin.management.title',
+                'admin.plugins.settings.enable',
+                'admin.plugins.settings.enableDesc',
+                'admin.plugin.uploadTitle',
+                'admin.plugin.installedTitle',
+                'admin.plugin.installedDesc',
+                'admin.plugin.uploadDesc',
+                'admin.plugin.uploadDisabledDesc',
+                'admin.plugins.settings.enableMarketplace',
+                'admin.plugins.settings.enableMarketplaceDesc',
+                'admin.plugins.settings.marketplaceUrl',
+                'admin.plugins.settings.marketplaceUrlDesc',
+            ],
+            schema: {
+                id: 'PluginManagementSettings',
+                component: PluginManagement,
+            },
+        },
+        custom: {
+            url: 'plugins/plugin_:plugin_id',
+            schema: {
+                id: 'CustomPluginSettings',
+                component: CustomPluginSettings,
+            },
+        },
     },
     integrations: {
-        icon: 'fa-plug',
+        icon: 'fa-sitemap',
         sectionTitle: t('admin.sidebar.integrations'),
         sectionTitleDefault: 'Integrations',
         id: 'integrations',
-        features: {
-            url: 'integrations/features',
-            title: t('admin.sidebar.integrationsFeatures'),
-            title_default: 'Features',
+        integration_management: {
+            url: 'integrations/integration_management',
+            title: t('admin.integrations.integrationManagement'),
+            title_default: 'Integration Management',
             schema: {
                 id: 'CustomIntegrationSettings',
-                name: t('admin.integrations.integrationsFeatures'),
-                name_default: 'Integrations Features',
+                name: t('admin.integrations.integrationManagement.title'),
+                name_default: 'Integration Management',
                 settings: [
                     {
                         type: Constants.SettingsTypes.TYPE_BOOL,
@@ -3353,21 +3567,44 @@ export default {
                     },
                     {
                         type: Constants.SettingsTypes.TYPE_BOOL,
-                        key: 'ServiceSettings.EnableBotAccountCreation',
-                        label: t('admin.service.enableBotTitle'),
-                        label_default: 'Enable Bot Account Creation: ',
-                        help_text: t('admin.service.enableBotAccountCreation'),
-                        help_text_default: 'When true, users can create bot accounts for integrations in **Integrations > Bot Accounts**. Bot accounts are similar to user accounts except they cannot be used to log in. See [documentation](https://mattermost.com/pl/default-bot-accounts) to learn more.',
-                        help_text_markdown: true,
-                    },
-                    {
-                        type: Constants.SettingsTypes.TYPE_BOOL,
                         key: 'ServiceSettings.EnableUserAccessTokens',
                         label: t('admin.service.userAccessTokensTitle'),
                         label_default: 'Enable User Access Tokens: ',
                         help_text: t('admin.service.userAccessTokensDescription'),
                         help_text_default: 'When true, users can create [user access tokens](!https://about.mattermost.com/default-user-access-tokens) for integrations in **Account Settings > Security**. They can be used to authenticate against the API and give full access to the account.\n\n To manage who can create personal access tokens or to search users by token ID, go to the **User Management > Users** page.',
                         help_text_markdown: true,
+                    },
+                ],
+            },
+        },
+        bot_accounts: {
+            url: 'integrations/bot_accounts',
+            title: t('admin.integrations.botAccounts'),
+            title_default: 'Bot Accounts',
+            schema: {
+                id: 'BotAccountSettings',
+                name: t('admin.integrations.botAccounts.title'),
+                name_default: 'Bot Accounts',
+                settings: [
+                    {
+                        type: Constants.SettingsTypes.TYPE_BOOL,
+                        key: 'ServiceSettings.EnableBotAccountCreation',
+                        label: t('admin.service.enableBotTitle'),
+                        label_default: 'Enable Bot Account Creation: ',
+                        help_text: t('admin.service.enableBotAccountCreation'),
+                        help_text_default: 'When true, users can create bot accounts for integrations in [Integrations > Bot Accounts]({siteURL}/_redirect/integrations/bots). Bot accounts are similar to user accounts except they cannot be used to log in. See [documentation](https://mattermost.com/pl/default-bot-accounts) to learn more.',
+                        help_text_markdown: true,
+                        help_text_values: {siteURL: getSiteURL()},
+                    },
+                    {
+                        type: Constants.SettingsTypes.TYPE_BOOL,
+                        key: 'ServiceSettings.DisableBotsWhenOwnerIsDeactivated',
+                        label: t('admin.service.disableBotOwnerDeactivatedTitle'),
+                        label_default: 'Disable bot accounts when owner is deactivated:',
+                        help_text: t('admin.service.disableBotWhenOwnerIsDeactivated'),
+                        help_text_default: 'When a user is deactivated, disables all bot accounts managed by the user. To re-enable bot accounts, go to [Integrations > Bot Accounts]({siteURL}/_redirect/integrations/bots).',
+                        help_text_markdown: true,
+                        help_text_values: {siteURL: getSiteURL()},
                     },
                 ],
             },
@@ -3455,42 +3692,7 @@ export default {
                         help_text: t('admin.service.corsDebugDescription'),
                         help_text_default: 'When true, prints messages to the logs to help when developing an integration that uses CORS. These messages will include the structured key value pair "source":"cors".',
                     },
-                    {
-                        type: Constants.SettingsTypes.TYPE_BOOL,
-                        key: 'ServiceSettings.EnableInsecureOutgoingConnections',
-                        label: t('admin.service.insecureTlsTitle'),
-                        label_default: 'Enable Insecure Outgoing Connections: ',
-                        help_text: t('admin.service.insecureTlsDesc'),
-                        help_text_default: 'When true, any outgoing HTTPS requests will accept unverified, self-signed certificates. For example, outgoing webhooks to a server with a self-signed TLS certificate, using any domain, will be allowed. Note that this makes these connections susceptible to man-in-the-middle attacks.',
-                    },
                 ],
-            },
-        },
-        plugins: {
-            url: 'integrations/plugins',
-            title: t('admin.integrations.plugins'),
-            title_default: 'Plugins (Beta)',
-            isHidden: it.configIsTrue('ExperimentalSettings', 'RestrictSystemAdmin'),
-            searchableStrings: [
-                'admin.plugin.management.title',
-                'admin.plugins.settings.enable',
-                'admin.plugins.settings.enableDesc',
-                'admin.plugin.uploadTitle',
-                'admin.plugin.installedTitle',
-                'admin.plugin.installedDesc',
-                'admin.plugin.uploadDesc',
-                'admin.plugin.uploadDisabledDesc',
-            ],
-            schema: {
-                id: 'PluginManagementSettings',
-                component: PluginManagement,
-            },
-        },
-        custom: {
-            url: 'integrations/plugin_:plugin_id',
-            schema: {
-                id: 'CustomPluginSettings',
-                component: CustomPluginSettings,
             },
         },
     },
@@ -3561,6 +3763,8 @@ export default {
             ],
             schema: {
                 id: 'Audits',
+                name: t('admin.compliance.complianceMonitoring'),
+                name_default: 'Compliance Monitoring',
                 component: Audits,
                 isHidden: it.isnt(it.licensedForFeature('Compliance')),
                 settings: [
@@ -3834,8 +4038,9 @@ export default {
                         label: t('admin.experimental.experimentalLdapGroupSync.title'),
                         label_default: 'Enable AD/LDAP Group Sync:',
                         help_text: t('admin.experimental.experimentalLdapGroupSync.desc'),
-                        help_text_default: 'When true, enables **AD/LDAP Group Sync** configurable under **Access Controls > Groups**. See [documentation](!https://mattermost.com/pl/default-ldap-group-sync) to learn more.',
+                        help_text_default: 'When true, enables **AD/LDAP Group Sync** configurable under **User Management > Groups**. See [documentation](!https://mattermost.com/pl/default-ldap-group-sync) to learn more.',
                         help_text_markdown: true,
+                        isHidden: it.isnt(it.licensedForFeature('LDAPGroups')),
                     },
                     {
                         type: Constants.SettingsTypes.TYPE_BOOL,
@@ -4109,3 +4314,5 @@ t('admin.field_names.postEditTimeLimit');
 t('admin.field_names.restrictCreationToDomains');
 t('admin.field_names.restrictDirectMessage');
 t('admin.field_names.teammateNameDisplay');
+
+export default AdminDefinition;

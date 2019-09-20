@@ -136,7 +136,8 @@ function components(state = {}, action) {
     case ActionTypes.RECEIVED_PLUGIN_COMPONENT: {
         if (action.name && action.data) {
             const nextState = {...state};
-            const nextArray = nextState[action.name] || [];
+            const currentArray = nextState[action.name] || [];
+            const nextArray = [...currentArray];
             nextArray.sort(sortComponents);
             nextState[action.name] = [...nextArray, action.data];
             return nextState;
@@ -180,6 +181,64 @@ function postTypes(state = {}, action) {
     }
 }
 
+function postCardTypes(state = {}, action) {
+    switch (action.type) {
+    case ActionTypes.RECEIVED_PLUGIN_POST_CARD_COMPONENT: {
+        if (action.data) {
+            // Skip saving the component if one already exists and the new plugin id
+            // is lower alphabetically
+            const currentPost = state[action.data.type];
+            if (currentPost && action.data.pluginId > currentPost.pluginId) {
+                return state;
+            }
+
+            const nextState = {...state};
+            nextState[action.data.type] = action.data;
+            return nextState;
+        }
+        return state;
+    }
+    case ActionTypes.REMOVED_PLUGIN_POST_CARD_COMPONENT:
+        return removePostPluginComponent(state, action);
+    case ActionTypes.RECEIVED_WEBAPP_PLUGIN:
+    case ActionTypes.REMOVED_WEBAPP_PLUGIN:
+        return removePostPluginComponents(state, action);
+    default:
+        return state;
+    }
+}
+
+function adminConsoleReducers(state = {}, action) {
+    switch (action.type) {
+    case ActionTypes.RECEIVED_ADMIN_CONSOLE_REDUCER: {
+        if (action.data) {
+            const nextState = {...state};
+            nextState[action.data.pluginId] = action.data.reducer;
+            return nextState;
+        }
+        return state;
+    }
+    case ActionTypes.REMOVED_ADMIN_CONSOLE_REDUCER: {
+        if (action.data) {
+            const nextState = {...state};
+            delete nextState[action.data.pluginId];
+            return nextState;
+        }
+        return state;
+    }
+    case ActionTypes.RECEIVED_WEBAPP_PLUGIN:
+    case ActionTypes.REMOVED_WEBAPP_PLUGIN:
+        if (action.data) {
+            const nextState = {...state};
+            delete nextState[action.data.id];
+            return nextState;
+        }
+        return state;
+    default:
+        return state;
+    }
+}
+
 export default combineReducers({
 
     // object where every key is a plugin id and values are webapp plugin manifests
@@ -192,4 +251,12 @@ export default combineReducers({
     // object where every key is a post type and the values are components wrapped in an
     // an object that contains a plugin id
     postTypes,
+
+    // object where every key is a post type and the values are components wrapped in an
+    // an object that contains a plugin id
+    postCardTypes,
+
+    // object where every key is a plugin id and the value is a function that
+    // modifies the admin console definition data structure
+    adminConsoleReducers,
 });

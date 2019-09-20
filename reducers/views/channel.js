@@ -96,7 +96,7 @@ function keepChannelIdAsUnread(state = null, action) {
 
         const msgCount = channel.total_msg_count - member.msg_count;
         const hadMentions = member.mention_count > 0;
-        const hadUnreads = member.notify_props.mark_unread !== NotificationLevels.MENTION && msgCount > 0;
+        const hadUnreads = member.notify_props && member.notify_props.mark_unread !== NotificationLevels.MENTION && msgCount > 0;
 
         if (hadMentions || hadUnreads) {
             return {
@@ -122,6 +122,20 @@ function keepChannelIdAsUnread(state = null, action) {
     }
 }
 
+function lastGetPosts(state = {}, action) {
+    switch (action.type) {
+    case ActionTypes.RECEIVED_POSTS_FOR_CHANNEL_AT_TIME:
+        return {
+            ...state,
+            [action.channelId]: action.time,
+        };
+    case UserTypes.LOGOUT_SUCCESS:
+        return {};
+    default:
+        return state;
+    }
+}
+
 export default combineReducers({
     postVisibility,
     lastChannelViewTime,
@@ -129,4 +143,5 @@ export default combineReducers({
     focusedPostId,
     mobileView,
     keepChannelIdAsUnread,
+    lastGetPosts,
 });

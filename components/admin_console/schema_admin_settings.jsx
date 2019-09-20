@@ -10,7 +10,6 @@ import * as I18n from 'i18n/i18n.jsx';
 
 import {saveConfig} from 'actions/admin_actions.jsx';
 import Constants from 'utils/constants.jsx';
-import {formatText} from 'utils/text_formatting.jsx';
 import {rolesFromMapping, mappingValueFromRoles} from 'utils/policy_roles_adapter';
 import * as Utils from 'utils/utils.jsx';
 import RequestButton from 'components/admin_console/request_button/request_button';
@@ -27,14 +26,14 @@ import SettingsGroup from 'components/admin_console/settings_group.jsx';
 import JobsTable from 'components/admin_console/jobs';
 import FileUploadSetting from 'components/admin_console/file_upload_setting.jsx';
 import RemoveFileSetting from 'components/admin_console/remove_file_setting.jsx';
-import HelpText from 'components/admin_console/help_text';
+import SchemaText from 'components/admin_console/schema_text';
 import SaveButton from 'components/save_button.jsx';
 import FormError from 'components/form_error.jsx';
 
 import FormattedMarkdownMessage from 'components/formatted_markdown_message';
 
-import AdminHeader from 'components/widgets/admin_console/admin_header.jsx';
-import FormattedAdminHeader from 'components/widgets/admin_console/formatted_admin_header.jsx';
+import AdminHeader from 'components/widgets/admin_console/admin_header';
+import FormattedAdminHeader from 'components/widgets/admin_console/formatted_admin_header';
 
 export default class SchemaAdminSettings extends React.Component {
     static propTypes = {
@@ -50,6 +49,8 @@ export default class SchemaAdminSettings extends React.Component {
     constructor(props) {
         super(props);
         this.isPlugin = false;
+
+        this.saveActions = [];
 
         this.buildSettingFunctions = {
             [Constants.SettingsTypes.TYPE_TEXT]: this.buildTextSetting,
@@ -258,7 +259,7 @@ export default class SchemaAdminSettings extends React.Component {
             return <span>{''}</span>;
         }
 
-        if (this.props.schema.translate === false) {
+        if (setting.label.translate === false) {
             return <span>{setting.label}</span>;
         }
 
@@ -309,9 +310,9 @@ export default class SchemaAdminSettings extends React.Component {
         }
 
         return (
-            <HelpText
+            <SchemaText
                 isMarkdown={isMarkdown}
-                isTranslated={this.props.schema.translate}
+                isTranslated={setting.translate}
                 text={helpText}
                 textDefault={helpTextDefault}
                 textValues={helpTextValues}
@@ -324,7 +325,7 @@ export default class SchemaAdminSettings extends React.Component {
             return '';
         }
 
-        if (this.props.schema.translate === false) {
+        if (setting.translate === false) {
             return setting.label;
         }
         return Utils.localizeMessage(setting.label, setting.label_default);
@@ -442,7 +443,14 @@ export default class SchemaAdminSettings extends React.Component {
     }
 
     buildDropdownSetting = (setting) => {
-        const options = setting.options || [];
+        const enterpriseReady = this.props.config.BuildEnterpriseReady === 'true';
+        const options = [];
+        setting.options.forEach((option) => {
+            if (!option.isHidden || !option.isHidden(this.props.config, this.state, this.props.license, enterpriseReady)) {
+                options.push(option);
+            }
+        });
+
         const values = options.map((o) => ({value: o.value, text: Utils.localizeMessage(o.display_name)}));
         const selectedValue = this.state[setting.key] || values[0].value;
 
@@ -713,8 +721,25 @@ export default class SchemaAdminSettings extends React.Component {
                 disabled={this.isDisabled(setting)}
                 setByEnv={this.isSetByEnv(setting.key)}
                 onChange={this.handleChange}
+                registerSaveAction={this.registerSaveAction}
+                setSaveNeeded={this.setSaveNeeded}
+                unRegisterSaveAction={this.unRegisterSaveAction}
             />
         );
+    }
+
+    unRegisterSaveAction = (saveAction) => {
+        const indexOfSaveAction = this.saveActions.indexOf(saveAction);
+        this.saveActions.splice(indexOfSaveAction, 1);
+    }
+
+    registerSaveAction = (saveAction) => {
+        this.saveActions.push(saveAction);
+    }
+
+    setSaveNeeded = () => {
+        this.setState({saveNeeded: 'config'});
+        this.props.setNavigationBlocked(true);
     }
 
     renderSettings = () => {
@@ -728,12 +753,7 @@ export default class SchemaAdminSettings extends React.Component {
         if (schema.settings) {
             schema.settings.forEach((setting) => {
                 if (this.buildSettingFunctions[setting.type] && !this.isHidden(setting)) {
-                    // This is a hack required as plugin settings are case insensitive
-                    let s = setting;
-                    if (this.isPlugin) {
-                        s = {...setting, key: setting.key.toLowerCase()};
-                    }
-                    settingsList.push(this.buildSettingFunctions[setting.type](s));
+                    settingsList.push(this.buildSettingFunctions[setting.type](setting));
                 }
             });
         }
@@ -741,20 +761,26 @@ export default class SchemaAdminSettings extends React.Component {
         let header;
         if (schema.header) {
             header = (
-                <div
-                    className='banner'
-                    dangerouslySetInnerHTML={{__html: formatText(schema.header, {mentionHighlight: false})}}
-                />
+                <div className='banner'>
+                    <SchemaText
+                        text={schema.header}
+                        isMarkdown={true}
+                        isTranslated={this.props.schema.translate}
+                    />
+                </div>
             );
         }
 
         let footer;
         if (schema.footer) {
             footer = (
-                <div
-                    className='banner'
-                    dangerouslySetInnerHTML={{__html: formatText(schema.footer, {mentionHighlight: false})}}
-                />
+                <div className='banner'>
+                    <SchemaText
+                        text={schema.footer}
+                        isMarkdown={true}
+                        isTranslated={this.props.schema.translate}
+                    />
+                </div>
             );
         }
 
@@ -777,7 +803,7 @@ export default class SchemaAdminSettings extends React.Component {
         this.setState({errorTooltip: isElipsis});
     }
 
-    doSubmit = (callback, getStateFromConfig) => {
+    doSubmit = async (callback, getStateFromConfig) => {
         this.setState({
             saving: true,
             serverError: null,
@@ -787,17 +813,10 @@ export default class SchemaAdminSettings extends React.Component {
         let config = JSON.parse(JSON.stringify(this.props.config));
         config = this.getConfigFromState(config);
 
-        saveConfig(
+        await saveConfig(
             config,
             (savedConfig) => {
                 this.setState(getStateFromConfig(savedConfig));
-
-                this.setState({
-                    saveNeeded: false,
-                    saving: false,
-                });
-
-                this.props.setNavigationBlocked(false);
 
                 if (callback) {
                     callback();
@@ -809,7 +828,6 @@ export default class SchemaAdminSettings extends React.Component {
             },
             (err) => {
                 this.setState({
-                    saving: false,
                     serverError: err.message,
                     serverErrorId: err.id,
                 });
@@ -823,7 +841,34 @@ export default class SchemaAdminSettings extends React.Component {
                 }
             }
         );
+
+        const results = [];
+        for (const saveAction of this.saveActions) {
+            results.push(saveAction());
+        }
+
+        const hasSaveActionError = await Promise.all(results).then((values) => values.some(((value) => value.error && value.error.message)));
+
+        const hasError = this.state.serverError || hasSaveActionError;
+        if (hasError) {
+            this.setState({saving: false});
+        } else {
+            this.setState({saving: false, saveNeeded: false});
+            this.props.setNavigationBlocked(false);
+        }
     };
+
+    // Some path parts may contain periods (e.g. plugin ids), but path walking the configuration
+    // relies on splitting by periods. Use this pair of functions to allow such path parts.
+    //
+    // It is assumed that no path contains the symbol '+'.
+    static escapePathPart(pathPart) {
+        return pathPart.replace(/\./g, '+');
+    }
+
+    static unescapePathPart(pathPart) {
+        return pathPart.replace(/\+/g, '.');
+    }
 
     static getConfigValue(config, path) {
         const pathParts = path.split('.');
@@ -833,13 +878,13 @@ export default class SchemaAdminSettings extends React.Component {
                 return null;
             }
 
-            return obj[pathPart];
+            return obj[SchemaAdminSettings.unescapePathPart(pathPart)];
         }, config);
     }
 
     setConfigValue(config, path, value) {
         function setValue(obj, pathParts) {
-            const part = pathParts[0];
+            const part = SchemaAdminSettings.unescapePathPart(pathParts[0]);
 
             if (pathParts.length === 1) {
                 obj[part] = value;
@@ -859,11 +904,26 @@ export default class SchemaAdminSettings extends React.Component {
         return Boolean(SchemaAdminSettings.getConfigValue(this.props.environmentConfig, path));
     };
 
-    customComponentWrapperClass = (className) => {
-        this.setState({customComponentWrapperClass: className});
+    hybridSchemaAndComponent = () => {
+        const schema = this.props.schema;
+        if (schema && schema.component && schema.settings) {
+            const CustomComponent = schema.component;
+            return (
+                <CustomComponent {...this.props}/>
+            );
+        }
+        return null;
     }
 
-    renderSettingsWrapper = () => {
+    render = () => {
+        const schema = this.props.schema;
+        if (schema && schema.component && !schema.settings) {
+            const CustomComponent = schema.component;
+            return (
+                <CustomComponent {...this.props}/>
+            );
+        }
+
         return (
             <div className={'wrapper--fixed ' + this.state.customComponentWrapperClass}>
                 {this.renderTitle()}
@@ -876,6 +936,7 @@ export default class SchemaAdminSettings extends React.Component {
                         >
                             {this.renderSettings()}
                         </form>
+                        {this.hybridSchemaAndComponent()}
                     </div>
                 </div>
                 <div className='admin-console-save'>
@@ -904,34 +965,6 @@ export default class SchemaAdminSettings extends React.Component {
                         </Tooltip>
                     </Overlay>
                 </div>
-            </div>
-        );
-    }
-
-    render = () => {
-        const schema = this.props.schema;
-
-        if (schema && schema.component && schema.settings) {
-            const CustomComponent = schema.component;
-            return (
-                <React.Fragment>
-                    {this.renderSettingsWrapper()}
-                    <CustomComponent
-                        {...this.props}
-                        customWrapperClass={this.customComponentWrapperClass}
-                    />
-                </React.Fragment>
-            );
-        }
-        if (schema && schema.component) {
-            const CustomComponent = schema.component;
-            return (
-                <CustomComponent {...this.props}/>
-            );
-        }
-        return (
-            <div className='wrapper--fixed'>
-                {this.renderSettingsWrapper()}
             </div>
         );
     }

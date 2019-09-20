@@ -9,13 +9,13 @@ import {Client4} from 'mattermost-redux/client';
 
 import {filterProfilesMatchingTerm} from 'mattermost-redux/utils/user_utils';
 
-import {displayEntireNameForUser, localizeMessage} from 'utils/utils.jsx';
+import {displayEntireNameForUser, localizeMessage, isGuest} from 'utils/utils.jsx';
 import ProfilePicture from 'components/profile_picture.jsx';
 import MultiSelect from 'components/multiselect/multiselect.jsx';
-import AddIcon from 'components/icon/add_icon';
-import BotBadge from 'components/widgets/badges/bot_badge.jsx';
+import AddIcon from 'components/widgets/icons/fa_add_icon';
+import GuestBadge from 'components/widgets/badges/guest_badge';
+import BotBadge from 'components/widgets/badges/bot_badge';
 
-import {searchUsers} from 'actions/user_actions.jsx';
 import Constants from 'utils/constants.jsx';
 
 const USERS_PER_PAGE = 50;
@@ -30,6 +30,7 @@ export default class ChannelInviteModal extends React.Component {
             addUsersToChannel: PropTypes.func.isRequired,
             getProfilesNotInChannel: PropTypes.func.isRequired,
             getTeamStats: PropTypes.func.isRequired,
+            searchProfiles: PropTypes.func.isRequired,
         }).isRequired,
     };
 
@@ -121,22 +122,34 @@ export default class ChannelInviteModal extends React.Component {
         });
     };
 
-    search = (term) => {
+    search = (searchTerm) => {
+        const term = searchTerm.trim();
         clearTimeout(this.searchTimeoutId);
         this.setState({
             term,
         });
 
         this.searchTimeoutId = setTimeout(
-            () => {
+            async () => {
                 this.setUsersLoadingState(true);
-                searchUsers(term, this.props.channel.team_id, {not_in_channel_id: this.props.channel.id, group_constrained: this.props.channel.group_constrained}).then(() => {
-                    this.setUsersLoadingState(false);
-                });
+                const options = {
+                    team_id: this.props.channel.team_id,
+                    not_in_channel_id: this.props.channel.id,
+                    group_constrained: this.props.channel.group_constrained,
+                };
+                await this.props.actions.searchProfiles(term, options);
+                this.setUsersLoadingState(false);
             },
             Constants.SEARCH_TIMEOUT_MILLISECONDS
         );
     };
+
+    renderAriaLabel = (option) => {
+        if (!option) {
+            return null;
+        }
+        return option.username;
+    }
 
     renderOption = (option, isSelected, onAdd) => {
         var rowSelected = '';
@@ -153,8 +166,7 @@ export default class ChannelInviteModal extends React.Component {
             >
                 <ProfilePicture
                     src={Client4.getProfilePictureUrl(option.id, option.last_picture_update)}
-                    width='32'
-                    height='32'
+                    size='md'
                 />
                 <div className='more-modal__details'>
                     <div className='more-modal__name'>
@@ -162,6 +174,10 @@ export default class ChannelInviteModal extends React.Component {
                         <BotBadge
                             show={Boolean(option.is_bot)}
                             className='badge-popoverlist'
+                        />
+                        <GuestBadge
+                            show={isGuest(option)}
+                            className='popoverlist'
                         />
                     </div>
                 </div>
@@ -207,6 +223,7 @@ export default class ChannelInviteModal extends React.Component {
                 optionRenderer={this.renderOption}
                 values={this.state.values}
                 valueRenderer={this.renderValue}
+                ariaLabelRenderer={this.renderAriaLabel}
                 perPage={USERS_PER_PAGE}
                 handlePageChange={this.handlePageChange}
                 handleInput={this.search}
@@ -225,7 +242,8 @@ export default class ChannelInviteModal extends React.Component {
 
         return (
             <Modal
-                dialogClassName='more-modal'
+                id='addUsersToChannelModal'
+                dialogClassName='a11y__modal more-modal'
                 show={this.state.show}
                 onHide={this.onHide}
                 onExited={this.props.onHide}
@@ -244,7 +262,9 @@ export default class ChannelInviteModal extends React.Component {
                         <span className='name'>{this.props.channel.display_name}</span>
                     </Modal.Title>
                 </Modal.Header>
-                <Modal.Body>
+                <Modal.Body
+                    role='application'
+                >
                     {inviteError}
                     {content}
                 </Modal.Body>

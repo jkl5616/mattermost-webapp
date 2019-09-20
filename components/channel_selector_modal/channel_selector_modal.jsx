@@ -7,14 +7,14 @@ import {Modal} from 'react-bootstrap';
 import {FormattedMessage} from 'react-intl';
 
 import Constants from 'utils/constants.jsx';
-import {localizeMessage} from 'utils/utils.jsx';
+import {localizeMessage, compareChannels} from 'utils/utils.jsx';
 
 import MultiSelect from 'components/multiselect/multiselect.jsx';
 
 import FormattedMarkdownMessage from 'components/formatted_markdown_message.jsx';
 
-import GlobeIcon from 'components/svg/globe_icon';
-import LockIcon from 'components/svg/lock_icon';
+import GlobeIcon from 'components/widgets/icons/globe_icon';
+import LockIcon from 'components/widgets/icons/lock_icon';
 
 const CHANNELS_PER_PAGE = 50;
 
@@ -47,7 +47,7 @@ export default class ChannelSelectorModal extends React.Component {
 
     componentDidMount() {
         this.props.actions.loadChannels(0, CHANNELS_PER_PAGE + 1, this.props.groupID, true).then((response) => {
-            this.setState({channels: response.data});
+            this.setState({channels: response.data.sort(compareChannels)});
             this.setChannelsLoadingState(false);
         });
     }
@@ -59,7 +59,7 @@ export default class ChannelSelectorModal extends React.Component {
             const searchTerm = this.props.searchTerm;
             if (searchTerm === '') {
                 this.props.actions.loadChannels(0, CHANNELS_PER_PAGE + 1, this.props.groupID, true).then((response) => {
-                    this.setState({channels: response.data});
+                    this.setState({channels: response.data.sort(compareChannels)});
                     this.setChannelsLoadingState(false);
                 });
             } else {
@@ -119,7 +119,14 @@ export default class ChannelSelectorModal extends React.Component {
         if (page > prevPage) {
             this.setChannelsLoadingState(true);
             this.props.actions.loadChannels(page, CHANNELS_PER_PAGE + 1, this.props.groupID, true).then((response) => {
-                this.setState({channels: [...this.state.channels, ...response.data]});
+                const newState = [...this.state.channels];
+                const stateChannelIDs = this.state.channels.map((stateChannel) => stateChannel.id);
+                response.data.forEach((serverChannel) => {
+                    if (!stateChannelIDs.includes(serverChannel.id)) {
+                        newState.push(serverChannel);
+                    }
+                });
+                this.setState({channels: newState.sort(compareChannels)});
                 this.setChannelsLoadingState(false);
             });
         }
@@ -129,7 +136,10 @@ export default class ChannelSelectorModal extends React.Component {
         this.setState({values});
     }
 
-    search = (term) => {
+    search = (term, multiselectComponent) => {
+        if (multiselectComponent.state.page !== 0) {
+            multiselectComponent.setState({page: 0});
+        }
         this.props.actions.setModalSearchTerm(term);
     }
 
@@ -181,7 +191,7 @@ export default class ChannelSelectorModal extends React.Component {
 
         return (
             <Modal
-                dialogClassName={'more-modal more-direct-channels channel-selector-modal'}
+                dialogClassName={'a11y__modal more-modal more-direct-channels channel-selector-modal'}
                 show={this.state.show}
                 onHide={this.handleHide}
                 onExited={this.handleExit}

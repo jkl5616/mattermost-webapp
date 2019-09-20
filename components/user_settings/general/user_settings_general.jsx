@@ -13,9 +13,9 @@ import * as Utils from 'utils/utils.jsx';
 import {t} from 'utils/i18n';
 
 import SettingItemMax from 'components/setting_item_max.jsx';
-import SettingItemMin from 'components/setting_item_min.jsx';
+import SettingItemMin from 'components/setting_item_min';
 import SettingPicture from 'components/setting_picture.jsx';
-import LoadingWrapper from 'components/widgets/loading/loading_wrapper.jsx';
+import LoadingWrapper from 'components/widgets/loading/loading_wrapper';
 import {AnnouncementBarMessages, AnnouncementBarTypes} from 'utils/constants';
 
 const holders = defineMessages({
@@ -57,7 +57,7 @@ const holders = defineMessages({
     },
     uploadImageMobile: {
         id: t('user.settings.general.mobile.uploadImage'),
-        defaultMessage: 'Click to upload an image.',
+        defaultMessage: 'Click to upload an image',
     },
     fullName: {
         id: t('user.settings.general.fullName'),
@@ -85,15 +85,6 @@ const holders = defineMessages({
     },
 });
 
-const prevSections = {
-    name: 'dummySectionName', // dummy value that should never match any section name
-    username: 'name',
-    nickname: 'username',
-    position: 'nickname',
-    email: 'position',
-    picture: 'email',
-};
-
 class UserSettingsGeneralTab extends React.Component {
     static propTypes = {
         intl: intlShape.isRequired,
@@ -101,7 +92,6 @@ class UserSettingsGeneralTab extends React.Component {
         updateSection: PropTypes.func.isRequired,
         updateTab: PropTypes.func.isRequired,
         activeSection: PropTypes.string.isRequired,
-        prevActiveSection: PropTypes.string.isRequired,
         closeModal: PropTypes.func.isRequired,
         collapseModal: PropTypes.func.isRequired,
         actions: PropTypes.shape({
@@ -113,7 +103,6 @@ class UserSettingsGeneralTab extends React.Component {
             setDefaultProfileImage: PropTypes.func.isRequired,
             uploadProfileImage: PropTypes.func.isRequired,
         }).isRequired,
-        sendEmailNotifications: PropTypes.bool,
         requireEmailVerification: PropTypes.bool,
         maxFileSize: PropTypes.number,
         ldapFirstNameAttributeSet: PropTypes.bool,
@@ -122,7 +111,8 @@ class UserSettingsGeneralTab extends React.Component {
         samlLastNameAttributeSet: PropTypes.bool,
         ldapNicknameAttributeSet: PropTypes.bool,
         samlNicknameAttributeSet: PropTypes.bool,
-        positionAttributeSet: PropTypes.bool,
+        ldapPositionAttributeSet: PropTypes.bool,
+        samlPositionAttributeSet: PropTypes.bool,
     }
 
     constructor(props) {
@@ -273,7 +263,7 @@ class UserSettingsGeneralTab extends React.Component {
                 if (data) {
                     this.updateSection('');
                     this.props.actions.getMe();
-                    const verificationEnabled = this.props.sendEmailNotifications && this.props.requireEmailVerification && emailUpdated;
+                    const verificationEnabled = this.props.requireEmailVerification && emailUpdated;
                     if (verificationEnabled) {
                         this.props.actions.clearErrors();
                         this.props.actions.logError({
@@ -435,9 +425,10 @@ class UserSettingsGeneralTab extends React.Component {
     }
 
     createEmailSection() {
+        const {formatMessage} = this.props.intl;
+
         let emailSection;
         if (this.props.activeSection === 'email') {
-            const emailEnabled = this.props.sendEmailNotifications;
             const emailVerificationEnabled = this.props.requireEmailVerification;
             const inputs = [];
 
@@ -448,16 +439,7 @@ class UserSettingsGeneralTab extends React.Component {
                 />
             );
 
-            if (!emailEnabled) {
-                helpText = (
-                    <div className='setting-list__hint col-sm-12 text-danger'>
-                        <FormattedMessage
-                            id='user.settings.general.emailHelp2'
-                            defaultMessage='Email has been disabled by your System Administrator. No notification emails will be sent until it is enabled.'
-                        />
-                    </div>
-                );
-            } else if (!emailVerificationEnabled) {
+            if (!emailVerificationEnabled) {
                 helpText = (
                     <FormattedMessage
                         id='user.settings.general.emailHelp3'
@@ -502,6 +484,7 @@ class UserSettingsGeneralTab extends React.Component {
                                     type='email'
                                     onChange={this.updateEmail}
                                     value={this.state.email}
+                                    aria-label={formatMessage({id: 'user.settings.general.newEmail', defaultMessage: 'New Email'})}
                                 />
                             </div>
                         </div>
@@ -524,6 +507,7 @@ class UserSettingsGeneralTab extends React.Component {
                                     type='email'
                                     onChange={this.updateConfirmEmail}
                                     value={this.state.confirmEmail}
+                                    aria-label={formatMessage({id: 'user.settings.general.confirmEmail', defaultMessage: 'Confirm Email'})}
                                 />
                             </div>
                         </div>
@@ -546,6 +530,7 @@ class UserSettingsGeneralTab extends React.Component {
                                     type='password'
                                     onChange={this.updateCurrentPassword}
                                     value={this.state.currentPassword}
+                                    aria-label={formatMessage({id: 'user.settings.general.currentPassword', defaultMessage: 'Current Password'})}
                                 />
                             </div>
                         </div>
@@ -726,7 +711,6 @@ class UserSettingsGeneralTab extends React.Component {
                         />
                     }
                     describe={describe}
-                    focused={this.props.prevActiveSection === prevSections.email}
                     section={'email'}
                     updateSection={this.updateSection}
                 />
@@ -790,6 +774,7 @@ class UserSettingsGeneralTab extends React.Component {
                                 onChange={this.updateFirstName}
                                 value={this.state.firstName}
                                 onFocus={Utils.moveCursorToEnd}
+                                aria-label={formatMessage({id: 'user.settings.general.firstName', defaultMessage: 'First Name'})}
                             />
                         </div>
                     </div>
@@ -813,6 +798,7 @@ class UserSettingsGeneralTab extends React.Component {
                                 type='text'
                                 onChange={this.updateLastName}
                                 value={this.state.lastName}
+                                aria-label={formatMessage({id: 'user.settings.general.lastName', defaultMessage: 'Last Name'})}
                             />
                         </div>
                     </div>
@@ -893,7 +879,6 @@ class UserSettingsGeneralTab extends React.Component {
                 <SettingItemMin
                     title={formatMessage(holders.fullName)}
                     describe={describe}
-                    focused={this.props.prevActiveSection === prevSections.name}
                     section={'name'}
                     updateSection={this.updateSection}
                 />
@@ -940,6 +925,7 @@ class UserSettingsGeneralTab extends React.Component {
                                 value={this.state.nickname}
                                 maxLength={Constants.MAX_NICKNAME_LENGTH}
                                 autoCapitalize='off'
+                                aria-label={formatMessage({id: 'user.settings.general.nickname', defaultMessage: 'Nickname'})}
                             />
                         </div>
                     </div>
@@ -994,7 +980,6 @@ class UserSettingsGeneralTab extends React.Component {
                 <SettingItemMin
                     title={formatMessage(holders.nickname)}
                     describe={describe}
-                    focused={this.props.prevActiveSection === prevSections.nickname}
                     section={'nickname'}
                     updateSection={this.updateSection}
                 />
@@ -1033,6 +1018,7 @@ class UserSettingsGeneralTab extends React.Component {
                                 value={this.state.username}
                                 autoCapitalize='off'
                                 onFocus={Utils.moveCursorToEnd}
+                                aria-label={formatMessage({id: 'user.settings.general.username', defaultMessage: 'Username'})}
                             />
                         </div>
                     </div>
@@ -1076,7 +1062,6 @@ class UserSettingsGeneralTab extends React.Component {
                 <SettingItemMin
                     title={formatMessage(holders.username)}
                     describe={this.props.user.username}
-                    focused={this.props.prevActiveSection === prevSections.username}
                     section={'username'}
                     updateSection={this.updateSection}
                 />
@@ -1087,7 +1072,7 @@ class UserSettingsGeneralTab extends React.Component {
         if (this.props.activeSection === 'position') {
             let extraInfo;
             let submit = null;
-            if ((this.props.user.auth_service === 'ldap' || this.props.user.auth_service === Constants.SAML_SERVICE) && this.props.positionAttributeSet) {
+            if ((this.props.user.auth_service === Constants.LDAP_SERVICE && this.props.ldapPositionAttributeSet) || (this.props.user.auth_service === Constants.SAML_SERVICE && this.props.samlPositionAttributeSet)) {
                 extraInfo = (
                     <span>
                         <FormattedMessage
@@ -1124,6 +1109,7 @@ class UserSettingsGeneralTab extends React.Component {
                                 maxLength={Constants.MAX_POSITION_LENGTH}
                                 autoCapitalize='off'
                                 onFocus={Utils.moveCursorToEnd}
+                                aria-label={formatMessage({id: 'user.settings.general.position', defaultMessage: 'Position'})}
                             />
                         </div>
                     </div>
@@ -1178,7 +1164,6 @@ class UserSettingsGeneralTab extends React.Component {
                 <SettingItemMin
                     title={formatMessage(holders.position)}
                     describe={describe}
-                    focused={this.props.prevActiveSection === prevSections.position}
                     section={'position'}
                     updateSection={this.updateSection}
                 />
@@ -1236,7 +1221,6 @@ class UserSettingsGeneralTab extends React.Component {
                 <SettingItemMin
                     title={formatMessage(holders.profilePicture)}
                     describe={minMessage}
-                    focused={this.props.prevActiveSection === prevSections.picture}
                     section={'picture'}
                     updateSection={this.updateSection}
                 />

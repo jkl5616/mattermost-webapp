@@ -12,13 +12,15 @@ import SpinnerButton from 'components/spinner_button';
 import {localizeMessage} from 'utils/utils.jsx';
 
 import DialogElement from './dialog_element';
+import DialogIntroductionText from './dialog_introduction_text';
 
 export default class InteractiveDialog extends React.Component {
     static propTypes = {
         url: PropTypes.string.isRequired,
         callbackId: PropTypes.string,
-        elements: PropTypes.arrayOf(PropTypes.object).isRequired,
+        elements: PropTypes.arrayOf(PropTypes.object),
         title: PropTypes.string.isRequired,
+        introductionText: PropTypes.string,
         iconUrl: PropTypes.string,
         submitLabel: PropTypes.string,
         notifyOnCancel: PropTypes.bool,
@@ -33,13 +35,16 @@ export default class InteractiveDialog extends React.Component {
         super(props);
 
         const values = {};
-        props.elements.forEach((e) => {
-            values[e.name] = e.default || null;
-        });
+        if (props.elements != null) {
+            props.elements.forEach((e) => {
+                values[e.name] = e.default || null;
+            });
+        }
 
         this.state = {
             show: true,
             values,
+            error: null,
             errors: {},
             submitting: false,
         };
@@ -51,18 +56,20 @@ export default class InteractiveDialog extends React.Component {
         const {elements} = this.props;
         const values = this.state.values;
         const errors = {};
-        elements.forEach((elem) => {
-            const error = checkDialogElementForError(elem, values[elem.name]);
-            if (error) {
-                errors[elem.name] = (
-                    <FormattedMessage
-                        id={error.id}
-                        defaultMessage={error.defaultMessage}
-                        values={error.values}
-                    />
-                );
-            }
-        });
+        if (elements) {
+            elements.forEach((elem) => {
+                const error = checkDialogElementForError(elem, values[elem.name]);
+                if (error) {
+                    errors[elem.name] = (
+                        <FormattedMessage
+                            id={error.id}
+                            defaultMessage={error.defaultMessage}
+                            values={error.values}
+                        />
+                    );
+                }
+            });
+        }
 
         this.setState({errors});
 
@@ -85,17 +92,26 @@ export default class InteractiveDialog extends React.Component {
 
         this.setState({submitting: false});
 
-        if (!data || !data.errors || Object.keys(data.errors).length === 0) {
+        let hasErrors = false;
+
+        if (data) {
+            if (data.error) {
+                hasErrors = true;
+                this.setState({error: data.error});
+            }
+
+            if (data.errors &&
+                Object.keys(data.errors).length >= 0 &&
+                checkIfErrorsMatchElements(data.errors, elements)
+            ) {
+                hasErrors = true;
+                this.setState({errors: data.errors});
+            }
+        }
+
+        if (!hasErrors) {
             this.handleHide(true);
-            return;
         }
-
-        if (checkIfErrorsMatchElements(data.errors, elements)) {
-            this.setState({errors: data.errors});
-            return;
-        }
-
-        this.handleHide(true);
     }
 
     onHide = () => {
@@ -125,7 +141,7 @@ export default class InteractiveDialog extends React.Component {
     }
 
     render() {
-        const {title, iconUrl, submitLabel, elements} = this.props;
+        const {title, introductionText, iconUrl, submitLabel, elements} = this.props;
 
         let submitText = (
             <FormattedMessage
@@ -141,6 +157,7 @@ export default class InteractiveDialog extends React.Component {
         if (iconUrl) {
             icon = (
                 <img
+                    id='interactiveDialogIconUrl'
                     alt={'modal title icon'}
                     className='more-modal__image'
                     width='36'
@@ -152,7 +169,8 @@ export default class InteractiveDialog extends React.Component {
 
         return (
             <Modal
-                dialogClassName='about-modal'
+                id='interactiveDialogModal'
+                dialogClassName='a11y__modal about-modal'
                 show={this.state.show}
                 onHide={this.onHide}
                 onExited={this.props.onHide}
@@ -160,7 +178,10 @@ export default class InteractiveDialog extends React.Component {
                 role='dialog'
                 aria-labelledby='interactiveDialogModalLabel'
             >
-                <Modal.Header closeButton={true}>
+                <Modal.Header
+                    closeButton={true}
+                    style={{borderBottom: elements == null && '0px'}}
+                >
                     <Modal.Title
                         componentClass='h1'
                         id='interactiveDialogModalLabel'
@@ -168,8 +189,14 @@ export default class InteractiveDialog extends React.Component {
                         {icon}{title}
                     </Modal.Title>
                 </Modal.Header>
-                <Modal.Body>
-                    {elements.map((e) => {
+                {(elements || introductionText) && <Modal.Body>
+                    {introductionText &&
+                        <DialogIntroductionText
+                            id='interactiveDialogModalIntroductionText'
+                            value={introductionText}
+                        />
+                    }
+                    {elements && elements.map((e) => {
                         return (
                             <DialogElement
                                 key={'dialogelement' + e.name}
@@ -190,9 +217,15 @@ export default class InteractiveDialog extends React.Component {
                             />
                         );
                     })}
-                </Modal.Body>
+                </Modal.Body>}
                 <Modal.Footer>
+                    {this.state.error && (
+                        <div className='error-text'>
+                            {this.state.error}
+                        </div>
+                    )}
                     <button
+                        id='interactiveDialogCancel'
                         type='button'
                         className='btn btn-link cancel-button'
                         onClick={this.onHide}
@@ -203,6 +236,7 @@ export default class InteractiveDialog extends React.Component {
                         />
                     </button>
                     <SpinnerButton
+                        id='interactiveDialogSubmit'
                         type='button'
                         className='btn btn-primary save-button'
                         onClick={this.handleSubmit}

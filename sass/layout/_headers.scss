@@ -14,9 +14,23 @@
         }
     }
 
+    .Badge {
+        display: inline-block;
+    }
+
+    .channel-header__trigger {
+        display: flex;
+        flex: 1 1 0;
+        min-width: 0;
+
+        .heading span {
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+    }
+
 
     .channel-header__favorites {
-        @include opacity(.5);
         float: left;
         height: 20px;
         margin: 0 5px 0 0;
@@ -29,10 +43,13 @@
         }
 
         &.active {
-            @include opacity(1);
+            i {
+               @include opacity(1);
+            }
         }
 
         i {
+            @include opacity(.5);
             font-size: 16px;
             position: relative;
             top: -1px;
@@ -66,13 +83,14 @@
         &:first-child {
             flex: 1;
             min-width: 0;
-            padding: 0 8px 0 0;
+            padding: 0 28px 0 0;
         }
 
         .markdown__paragraph-inline {
             overflow: hidden;
             text-overflow: ellipsis;
-            width: calc(100% - 50px);
+            display: inline-block;
+            width: 100%;
         }
     }
 
@@ -124,7 +142,22 @@
         text-align: center;
         width: 30px;
         z-index: 5;
-        color: #B1B1B3;
+
+        body.enable-animations & {
+            @include transition-property(color, border-color);
+            @include transition-duration($transition-quick);
+            @include transition-delay(0s);
+            @include transition-timing-function(ease-in-out);
+        }
+
+        svg {
+            body.enable-animations & {
+                @include transition-property(fill);
+                @include transition-duration($transition-quick);
+                @include transition-delay(0s);
+                @include transition-timing-function(ease-in-out);
+            }
+        }
 
         &.wide {
             @include border-radius(37px);
@@ -229,14 +262,8 @@
     .heading {
         font-size: 14px;
         font-weight: 600;
-        margin: 0 8px 0 0;
-        flex: 1 1 0;
         overflow: hidden;
         text-overflow: ellipsis;
-    }
-
-    .Badge {
-        margin-left: 0;
     }
 
     .caret {
@@ -269,13 +296,15 @@
 .header-dropdown__icon {
     color: inherit;
     font-size: 19px;
-    margin-left: 1px;
+    margin: 0 0 0 8px;
     position: relative;
     top: 0;
 }
 
 .channel-header__top {
     display: flex;
+    align-items: center;
+    min-width: 0;
 }
 
 .channel-header__info {
@@ -305,7 +334,7 @@
             opacity: .5;
         }
 
-        h2 {
+        > div {
             display: flex;
             flex: 0 1 auto;
             min-width: 0;
@@ -315,12 +344,6 @@
             display: inline-block;
             text-decoration: none;
             width: calc(100% - 65px);
-        }
-
-        h2 {
-            font-size: inherit;
-            line-height: inherit;
-            margin: 0;
         }
 
         .MenuWrapper {
@@ -334,12 +357,13 @@
 
     .channel-header__description {
         font-size: 12px;
-        margin-bottom: 3px;
         overflow: hidden;
         position: relative;
         text-overflow: ellipsis;
-        width: calc(100% - 18px);
-        height: 20px;
+        height: 22px;
+        width: 100%;
+        display: flex;
+        align-items: flex-start;
 
         span[data-emoticon] {
             .emoticon {
@@ -362,6 +386,11 @@
             }
         }
 
+        .header-description__text {
+            flex: 1 1 0;
+            overflow: hidden;
+        }
+
         .status {
             margin-right: 3px;
         }
@@ -377,10 +406,13 @@
         }
 
         &.light {
-            @include opacity(.8);
+            opacity: 1;
             color: inherit;
+            overflow: visible;
 
             button {
+                @include opacity(.6);
+
                 &:hover
                 &:focus {
                     text-decoration: underline;
@@ -390,6 +422,17 @@
 
         .markdown-inline-img {
             max-height: 45px;
+        }
+    }
+
+    .has-guest-header {
+        margin-right: 3px;
+
+        &:after {
+            content: '\2022';
+            margin: 0 2px 0 5px;
+            position: relative;
+            top: 1px;
         }
     }
 
@@ -423,7 +466,7 @@
 
 .channel-intro {
     margin: 0 auto 10px;
-    padding: 0 15px;
+    padding: 110px 15px 0;
 
     &.channel-intro--centered {
         max-width: 1020px;
@@ -439,9 +482,10 @@
     }
 
     .channel-intro-profile {
-        margin-top: 5px;
+        margin: 0 0 4px;
 
         .user-popover {
+            font-weight: 600;
             max-width: calc(100% - 100px);
             overflow: hidden;
             text-overflow: ellipsis;
@@ -496,7 +540,7 @@
         padding: 10px;
 
         &:before {
-            @include single-transition(all, .05s, linear);
+            @include single-transition(all, $transition-quick, ease-in-out);
             background: none;
             content: '';
             height: 100%;
@@ -530,6 +574,19 @@
             .header__info {
                 .sidebar-header-dropdown__icon {
                     @include opacity(1);
+                }
+            }
+        }
+
+        .d-flex {
+            width: 100%;
+
+            .MenuWrapper {
+                flex: 1;
+
+                &:first-child {
+                    flex: 0 0 50px;
+                    width: auto;
                 }
             }
         }
@@ -609,22 +666,19 @@
             }
         }
 
-        .user__picture {
-            @include border-radius(36px);
+        .Avatar {
             float: left;
-            height: 36px;
-            width: 36px;
         }
 
         .header__info {
-            @include clearfix;
             @include flex-grow(1);
             color: $white;
-            padding: 2px 16px 0 8px;
+            padding: 2px 16px 0 0;
             position: relative;
             width: 100%;
 
             .sidebar-header-dropdown__icon {
+                @include single-transition(opacity, $transition-quick, ease-in-out);
                 @include opacity(.8);
                 border-radius: 36px;
                 fill: $white;
@@ -657,7 +711,7 @@
         }
 
         .user__name {
-            @include single-transition(all, .1s, linear);
+            @include single-transition(all, $transition-quick, ease-in-out);
             @include alpha-property(color, $white, .8);
             font-size: 14px;
             font-weight: 400;

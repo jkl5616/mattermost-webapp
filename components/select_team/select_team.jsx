@@ -20,16 +20,20 @@ import BackButton from 'components/common/back_button.jsx';
 import LoadingScreen from 'components/loading_screen.jsx';
 import SystemPermissionGate from 'components/permissions_gates/system_permission_gate';
 import SiteNameAndDescription from 'components/common/site_name_and_description';
-import LogoutIcon from 'components/icon/logout_icon';
+import LogoutIcon from 'components/widgets/icons/fa_logout_icon';
+
+import FormattedMarkdownMessage from 'components/formatted_markdown_message';
 
 import SelectTeamItem from './components/select_team_item.jsx';
 
 const TEAMS_PER_PAGE = 200;
+const TEAM_MEMBERSHIP_DENIAL_ERROR_ID = 'api.team.add_members.user_denied';
 
 export default class SelectTeam extends React.Component {
     static propTypes = {
         currentUserId: PropTypes.string.isRequired,
         currentUserRoles: PropTypes.string,
+        currentUserIsGuest: PropTypes.bool,
         customDescriptionText: PropTypes.string,
         isMemberOfTeam: PropTypes.bool.isRequired,
         listableTeams: PropTypes.array,
@@ -39,6 +43,7 @@ export default class SelectTeam extends React.Component {
         canJoinPublicTeams: PropTypes.bool.isRequired,
         canJoinPrivateTeams: PropTypes.bool.isRequired,
         history: PropTypes.object,
+        siteURL: PropTypes.string,
         actions: PropTypes.shape({
             getTeams: PropTypes.func.isRequired,
             loadRolesIfNeeded: PropTypes.func.isRequired,
@@ -69,14 +74,36 @@ export default class SelectTeam extends React.Component {
     }
 
     handleTeamClick = async (team) => {
+        const {siteURL, currentUserRoles} = this.props;
         this.setState({loadingTeamId: team.id});
 
         const {data, error} = await this.props.actions.addUserToTeam(team.id, this.props.currentUserId);
         if (data) {
             this.props.history.push(`/${team.name}/channels/${Constants.DEFAULT_CHANNEL}`);
         } else if (error) {
+            let errorMsg = error.message;
+
+            if (error.server_error_id === TEAM_MEMBERSHIP_DENIAL_ERROR_ID) {
+                if (currentUserRoles.includes(Constants.PERMISSIONS_SYSTEM_ADMIN)) {
+                    errorMsg = (
+                        <FormattedMarkdownMessage
+                            id='join_team_group_constrained_denied_admin'
+                            defaultMessage={`You need to be a member of a linked group to join this team. You can add a group to this team [here](${siteURL}/admin_console/user_management/groups).`}
+                            values={{siteURL}}
+                        />
+                    );
+                } else {
+                    errorMsg = (
+                        <FormattedMarkdownMessage
+                            id='join_team_group_constrained_denied'
+                            defaultMessage='You need to be a member of a linked group to join this team.'
+                        />
+                    );
+                }
+            }
+
             this.setState({
-                error,
+                error: errorMsg,
                 loadingTeamId: '',
             });
         }
@@ -97,6 +124,7 @@ export default class SelectTeam extends React.Component {
 
     render() {
         const {
+            currentUserIsGuest,
             canManageSystem,
             customDescriptionText,
             isMemberOfTeam,
@@ -114,7 +142,20 @@ export default class SelectTeam extends React.Component {
             openContent = (
                 <div className='signup__content'>
                     <div className={'form-group has-error'}>
-                        <label className='control-label'>{this.state.error.message}</label>
+                        <label className='control-label'>{this.state.error}</label>
+                    </div>
+                </div>
+            );
+        } else if (currentUserIsGuest) {
+            openContent = (
+                <div className='signup__content'>
+                    <div className={'form-group has-error'}>
+                        <label className='control-label'>
+                            <FormattedMessage
+                                id='signup_team.guest_without_channels'
+                                defaultMessage='Your guest account has no channels assigned. Please contact an administrator.'
+                            />
+                        </label>
                     </div>
                 </div>
             );

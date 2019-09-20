@@ -14,7 +14,9 @@
     background-position: 50% 50%;
     background-repeat: no-repeat;
     background-size: contain;
-    display: inline-block;
+    display: inline-flex;
+    align-items: end;
+    justify-content: space-between;
     height: 21px;
     min-height: 1em;
     min-width: 1em;
@@ -22,8 +24,12 @@
     width: 21px;
 
     &--unicode {
-        font-size: 18px;
+        font-size: 21px;
         line-height: 1.3;
+
+        .os--windows & {
+            font-size: 16px;
+        }
     }
 }
 
@@ -64,7 +70,6 @@
     position: absolute;
     width: 315px;
     z-index: 999;
-
     .browser--ie & {
         width: 325px;
     }
@@ -213,7 +218,7 @@
     position: relative;
     width: 100%;
     -webkit-overflow-scrolling: touch;
-
+    height: 290px;
     .emoji-picker__container {
         min-height: 100%;
         position: relative;

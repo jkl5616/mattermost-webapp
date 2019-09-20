@@ -14,10 +14,6 @@ export default class MultiSelectList extends React.Component {
     constructor(props) {
         super(props);
 
-        this.defaultOptionRenderer = this.defaultOptionRenderer.bind(this);
-        this.handleArrowPress = this.handleArrowPress.bind(this);
-        this.setSelected = this.setSelected.bind(this);
-
         this.toSelect = -1;
 
         this.state = {
@@ -61,11 +57,11 @@ export default class MultiSelectList extends React.Component {
         }
     }
 
-    setSelected(selected) {
+    setSelected = (selected) => {
         this.toSelect = selected;
     }
 
-    handleArrowPress(e) {
+    handleArrowPress = (e) => {
         if (cmdOrCtrlPressed(e) && e.shiftKey) {
             return;
         }
@@ -101,7 +97,7 @@ export default class MultiSelectList extends React.Component {
         this.props.onSelect(options[selected]);
     }
 
-    defaultOptionRenderer(option, isSelected, onAdd) {
+    defaultOptionRenderer = (option, isSelected, onAdd) => {
         var rowSelected = '';
         if (isSelected) {
             rowSelected = 'more-modal__row--selected';
@@ -121,18 +117,19 @@ export default class MultiSelectList extends React.Component {
 
     render() {
         const options = this.props.options;
+        let renderOutput;
+
         if (this.props.loading) {
-            return (
-                <div>
+            renderOutput = (
+                <div aria-hidden={true}>
                     <LoadingScreen
                         position='absolute'
                         key='loading'
                     />
                 </div>
             );
-        }
-        if (options == null || options.length === 0) {
-            return (
+        } else if (options == null || options.length === 0) {
+            renderOutput = (
                 <div
                     key='no-users-found'
                     className='no-channel-message'
@@ -145,24 +142,46 @@ export default class MultiSelectList extends React.Component {
                     </p>
                 </div>
             );
-        }
-
-        let renderer;
-        if (this.props.optionRenderer) {
-            renderer = this.props.optionRenderer;
         } else {
-            renderer = this.defaultOptionRenderer;
-        }
+            let renderer;
+            if (this.props.optionRenderer) {
+                renderer = this.props.optionRenderer;
+            } else {
+                renderer = this.defaultOptionRenderer;
+            }
 
-        const optionControls = options.map((o, i) => renderer(o, this.state.selected === i, this.props.onAdd));
+            const optionControls = options.map((o, i) => renderer(o, this.state.selected === i, this.props.onAdd));
+
+            const selectedOption = options[this.state.selected];
+            const ariaLabel = this.props.ariaLabelRenderer(selectedOption);
+
+            renderOutput = (
+                <div className='more-modal__list'>
+                    <div
+                        className='sr-only'
+                        aria-live='polite'
+                        aria-atomic='true'
+                    >
+                        {ariaLabel}
+                    </div>
+                    <div
+                        ref='list'
+                        id='multiSelectList'
+                        role='presentation'
+                        aria-hidden={true}
+                    >
+                        {optionControls}
+                    </div>
+                </div>
+            );
+        }
 
         return (
-            <div className='more-modal__list'>
-                <div
-                    ref='list'
-                >
-                    {optionControls}
-                </div>
+            <div
+                className='multi-select__wrapper'
+                aria-live='polite'
+            >
+                {renderOutput}
             </div>
         );
     }
@@ -177,6 +196,7 @@ MultiSelectList.defaultProps = {
 MultiSelectList.propTypes = {
     options: PropTypes.arrayOf(PropTypes.object),
     optionRenderer: PropTypes.func,
+    ariaLabelRenderer: PropTypes.func,
     page: PropTypes.number,
     perPage: PropTypes.number,
     onPageChange: PropTypes.func,

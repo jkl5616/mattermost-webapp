@@ -8,12 +8,7 @@ import React from 'react';
 import * as UserAgent from 'utils/user_agent.jsx';
 
 export default class SettingsSidebar extends React.Component {
-    constructor(props) {
-        super(props);
-
-        this.handleClick = this.handleClick.bind(this);
-    }
-    handleClick(tab, e) {
+    handleClick = (tab, e) => {
         e.preventDefault();
         this.props.updateTab(tab.name);
         $(e.target).closest('.settings-modal').addClass('display--content');
@@ -41,6 +36,7 @@ export default class SettingsSidebar extends React.Component {
                         id={`${tab.name}Button`}
                         className='cursor--pointer style--none'
                         onClick={this.handleClick.bind(null, tab)}
+                        aria-label={tab.uiName.toLowerCase()}
                     >
                         <i
                             className={tab.icon}

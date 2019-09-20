@@ -24,14 +24,7 @@ const exportFormats = {
 };
 
 export default class MessageExportSettings extends AdminSettings {
-    constructor(props) {
-        super(props);
-
-        this.getConfigFromState = this.getConfigFromState.bind(this);
-        this.renderSettings = this.renderSettings.bind(this);
-    }
-
-    getConfigFromState(config) {
+    getConfigFromState = (config) => {
         config.MessageExportSettings.EnableExport = this.state.enableComplianceExport;
         config.MessageExportSettings.ExportFormat = this.state.exportFormat;
         config.MessageExportSettings.DailyRunTime = this.state.exportJobStartTime;
@@ -87,7 +80,7 @@ export default class MessageExportSettings extends AdminSettings {
         );
     }
 
-    renderSettings() {
+    renderSettings = () => {
         const exportFormatOptions = [
             {value: exportFormats.EXPORT_FORMAT_ACTIANCE, text: Utils.localizeMessage('admin.complianceExport.exportFormat.actiance', 'Actiance XML')},
             {value: exportFormats.EXPORT_FORMAT_CSV, text: Utils.localizeMessage('admin.complianceExport.exportFormat.csv', 'CSV')},
@@ -205,7 +198,7 @@ export default class MessageExportSettings extends AdminSettings {
         const dropdownHelpText = (
             <FormattedMarkdownMessage
                 id='admin.complianceExport.exportFormat.description'
-                defaultMessage='Format of the compliance export. Corresponds to the system that you want to import the data into.\n \nFor Actiance XML, compliance export files are written to the \"exports\" subdirectory of the configured [Local Storage Directory]({siteURL}/admin_console/files/storage). For Global Relay EML, they are emailed to the configured email address.'
+                defaultMessage='Format of the compliance export. Corresponds to the system that you want to import the data into.\n \nFor Actiance XML, compliance export files are written to the \"exports\" subdirectory of the configured [Local Storage Directory]({siteURL}/admin_console/environment/file_storage). For Global Relay EML, they are emailed to the configured email address.'
                 values={{siteURL: getSiteURL()}}
             />
         );

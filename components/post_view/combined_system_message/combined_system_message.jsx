@@ -308,7 +308,7 @@ export default class CombinedSystemMessage extends React.PureComponent {
         }
 
         const formattedMessage = formatMessage(localeHolder, {firstUser, secondUser, actor});
-
+        console.log(formattedMessage);
         return (
             <Markdown
                 message={formattedMessage}

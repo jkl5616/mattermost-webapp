@@ -14,6 +14,7 @@ import {isPostFlagged} from 'mattermost-redux/utils/post_utils';
 import {
     closeRightHandSide,
     selectPostFromRightHandSideSearch,
+    selectPostCardFromRightHandSideSearch,
     setRhsExpanded,
 } from 'actions/views/rhs';
 
@@ -28,9 +29,13 @@ function mapStateToProps() {
         const enablePostUsernameOverride = config.EnablePostUsernameOverride === 'true';
         const {post} = ownProps;
         const user = getUser(state, post.user_id);
+        const channel = getChannel(state, post.channel_id) || {delete_at: 0};
 
         return {
-            channel: getChannel(state, post.channel_id),
+            channelId: channel.id,
+            channelName: channel.display_name,
+            channelType: channel.type,
+            channelIsArchived: channel.delete_at !== 0,
             currentTeamName: getCurrentTeam(state).name,
             commentCountForPost: getCommentCountForPost(state, {post}),
             enablePostUsernameOverride,
@@ -45,6 +50,7 @@ function mapDispatchToProps(dispatch) {
         actions: bindActionCreators({
             closeRightHandSide,
             selectPost: selectPostFromRightHandSideSearch,
+            selectPostCard: selectPostCardFromRightHandSideSearch,
             setRhsExpanded,
         }, dispatch),
     };
