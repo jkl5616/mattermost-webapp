@@ -50,6 +50,7 @@ export default class ChannelHeader extends React.PureComponent {
         currentUser: PropTypes.object.isRequired,
         channel: PropTypes.object,
         channelMember: PropTypes.object,
+        pinnedPostCount: PropTypes.Integer,
         dmUser: PropTypes.object,
         isFavorite: PropTypes.bool,
         isReadOnly: PropTypes.bool,
@@ -258,6 +259,7 @@ export default class ChannelHeader extends React.PureComponent {
             currentUser,
             channel,
             channelMember,
+            pinnedPostCount,
             isMuted: channelMuted,
             isReadOnly,
             isFavorite,
@@ -642,7 +644,7 @@ export default class ChannelHeader extends React.PureComponent {
                             id='channelPinnedPostCountText'
                             className='icon__text'
                         >
-                            1
+                            {pinnedPostCount}
                         </span>
                         <PinIcon
                             className='icon icon__pin'
@@ -652,7 +654,6 @@ export default class ChannelHeader extends React.PureComponent {
                 </OverlayTrigger>
             </div>
         );
-        
         return (
             <div
                 id='channel-header'
